@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos API - Taller 06</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Gestion de Productos</h1>
+    <p>Interfaz de prueba del CRUD REST — Taller 06 Ingenieria de Software II</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2 id="form-title">Nuevo producto</h2>
+      <form id="producto-form">
+        <input type="hidden" id="producto-id">
+
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" required>
+
+        <label for="descripcion">Descripcion</label>
+        <input type="text" id="descripcion">
+
+        <label for="precio">Precio</label>
+        <input type="number" id="precio" step="0.01" min="0" required>
+
+        <label for="stock">Stock</label>
+        <input type="number" id="stock" min="0" required>
+
+        <div class="form-actions">
+          <button type="submit" id="submit-btn">Crear</button>
+          <button type="button" id="cancel-btn" class="secondary" hidden>Cancelar edicion</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="table-header">
+        <h2>Productos</h2>
+        <button id="refresh-btn" class="secondary">Actualizar lista</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>Descripcion</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="productos-tbody">
+        </tbody>
+      </table>
+      <p id="empty-msg" hidden>No hay productos registrados todavia.</p>
+    </section>
+
+    <p id="status-msg" role="status"></p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

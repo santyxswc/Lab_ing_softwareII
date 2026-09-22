@@ -22,6 +22,11 @@ src/main/java/edu/unicauca/productosapi/
 └── exception/
     ├── ProductoNoEncontradoException.java
     └── ManejadorGlobalExcepciones.java # Traduce excepciones a respuestas HTTP
+
+src/main/resources/static/            # Frontend estatico de prueba (HTML/CSS/JS)
+├── index.html
+├── style.css
+└── app.js
 ```
 
 ## Requisitos
@@ -36,6 +41,21 @@ src/main/java/edu/unicauca/productosapi/
 ```
 
 La aplicación queda disponible en `http://localhost:8080`.
+
+## Interfaz web de prueba
+
+Al abrir `http://localhost:8080` en el navegador se sirve una pequeña
+interfaz (HTML/CSS/JS puro, sin frameworks, servida directamente por
+Spring Boot desde `src/main/resources/static/`) que consume la API con
+`fetch` y permite:
+
+- Ver la lista de productos (GET).
+- Crear un producto con el formulario (POST).
+- Editar un producto existente con el botón "Editar" (PUT).
+- Eliminar un producto con el botón "Eliminar" (DELETE).
+
+Es solo una ayuda visual para entender el funcionamiento del CRUD; el
+entregable formal del taller sigue siendo la evidencia en Postman.
 
 La consola de H2 (para inspeccionar la base de datos en memoria) está en
 `http://localhost:8080/h2-console` con:

@@ -1,0 +1,25 @@
+# Maven build directory
+target/
+*.class
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradlenb/
+
+# OS files
+.DS_Store
+Thumbs.db

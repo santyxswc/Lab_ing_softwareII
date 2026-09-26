@@ -42,6 +42,15 @@ src/main/resources/static/            # Frontend estatico de prueba (HTML/CSS/JS
 
 La aplicación queda disponible en `http://localhost:8080`.
 
+Si al arrancar aparece `BindException: La dirección ya se está usando` (o `Port 8080 was already in use`), otro
+programa ya ocupa el puerto 8080. Se puede correr en otro puerto, por ejemplo el 8081:
+
+```bash
+SERVER_PORT=8081 ./mvnw spring-boot:run    # API en http://localhost:8081/api/productos
+```
+
+En ese caso todas las direcciones (interfaz web, consola H2 y Postman) usan `8081` en lugar de `8080`.
+
 ## Interfaz web de prueba
 
 Al abrir `http://localhost:8080` en el navegador se sirve una pequeña

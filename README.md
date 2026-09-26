@@ -45,6 +45,15 @@ cd APIREST_con_spirngBoot
 ./mvnw test               # prueba de arranque del contexto
 ```
 
+Si al arrancar aparece `BindException: La dirección ya se está usando` (o `Port 8080 was already in use`), otro
+programa ya ocupa el puerto 8080. Se puede correr en otro puerto, por ejemplo el 8081:
+
+```bash
+SERVER_PORT=8081 ./mvnw spring-boot:run    # API en http://localhost:8081/api/productos
+```
+
+En ese caso todas las direcciones (interfaz web, consola H2 y Postman) usan `8081` en lugar de `8080`.
+
 En `http://localhost:8080` hay una interfaz web para probar el CRUD desde el navegador, y en
 `http://localhost:8080/h2-console` la consola de la base de datos.
 
@@ -54,17 +63,6 @@ En `http://localhost:8080` hay una interfaz web para probar el CRUD desde el nav
 
 - Java 21
 - Maven 3.9 o superior (la API incluye el wrapper `mvnw`)
-
-## Documentación del código
-
-Todo el código está documentado con comentarios Doxygen/Javadoc (`@file`, `@brief`, `@param`, `@return`,
-`@throws`). Para generar la documentación HTML de ambos talleres desde la raíz del repositorio:
-
-```bash
-doxygen            # usa el Doxyfile de la raíz; resultado en docs/html/index.html
-```
-
----
 
 ## Integrantes
 

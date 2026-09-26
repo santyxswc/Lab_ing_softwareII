@@ -72,19 +72,24 @@ async function cargarProductos() {
  * @param productos Productos recibidos de la API
  */
 function renderizarTabla(productos) {
-  tbody.innerHTML = "";
+  tbody.replaceChildren();
   emptyMsg.hidden = productos.length > 0;
 
   productos.forEach((producto) => {
     const fila = document.createElement("tr");
 
-    fila.innerHTML = `
-      <td>${producto.id}</td>
-      <td>${producto.nombre ?? ""}</td>
-      <td>${producto.descripcion ?? ""}</td>
-      <td>${(producto.precio ?? 0).toLocaleString("es-CO")}</td>
-      <td>${producto.stock ?? 0}</td>
-    `;
+    const valores = [
+      producto.id,
+      producto.nombre ?? "",
+      producto.descripcion ?? "",
+      (producto.precio ?? 0).toLocaleString("es-CO"),
+      producto.stock ?? 0,
+    ];
+    valores.forEach((valor) => {
+      const celda = document.createElement("td");
+      celda.textContent = valor;
+      fila.appendChild(celda);
+    });
 
     const celdaAcciones = document.createElement("td");
     celdaAcciones.className = "actions";

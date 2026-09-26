@@ -1,3 +1,10 @@
+/**
+ * @file QuestionPipelineTest.java
+ * @brief Pruebas de los filtros y del pipeline.
+ * @author Santiago Caicedo
+ * @author Adrian Araujo
+ * @author Ivan Alexander Lopez
+ */
 package co.edu.unicauca.microkernel.pipeline;
 
 import co.edu.unicauca.microkernel.common.entities.QuestionRequest;
@@ -14,15 +21,20 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Pruebas unitarias del patrón Tuberías y Filtros: cada filtro se
- * prueba de forma aislada, y luego se prueba el pipeline completo
- * ensamblado (igual a como lo arma MultipleChoiceQuestionPlugin).
+ * @brief Pruebas del patrón tuberías y filtros.
+ *
+ * Cada filtro se prueba por separado y luego el pipeline completo, armado igual que en MultipleChoiceQuestionPlugin.
  */
 public class QuestionPipelineTest {
 
+    /** Cuatro opciones válidas de ejemplo. */
     private static final List<String> OPCIONES_VALIDAS = Arrays.asList(
             "Single Responsibility", "Open Closed", "Liskov", "Interface Segregation");
 
+    /**
+     * @brief Solicitud que cumple todas las reglas.
+     * @return Solicitud válida
+     */
     private QuestionRequest requestValida() {
         return new QuestionRequest(
                 "Pregunta SOLID",
@@ -34,8 +46,9 @@ public class QuestionPipelineTest {
         );
     }
 
-    // ---------- ContentValidationFilter ----------
-
+    /**
+     * @brief Título y contenido vacíos no pasan.
+     */
     @Test
     public void testContentValidationFilterInvalido() {
         ContentValidationFilter filter = new ContentValidationFilter();
@@ -44,20 +57,27 @@ public class QuestionPipelineTest {
         assertFalse(filter.process(requestInvalido));
     }
 
+    /**
+     * @brief Título y contenido completos pasan.
+     */
     @Test
     public void testContentValidationFilterValido() {
         ContentValidationFilter filter = new ContentValidationFilter();
         assertTrue(filter.process(requestValida()));
     }
 
-    // ---------- OptionsValidationFilter ----------
-
+    /**
+     * @brief Cuatro opciones pasan.
+     */
     @Test
     public void testOptionsValidationFilterConCuatroOpciones() {
         OptionsValidationFilter filter = new OptionsValidationFilter();
         assertTrue(filter.process(requestValida()));
     }
 
+    /**
+     * @brief Dos opciones no pasan.
+     */
     @Test
     public void testOptionsValidationFilterConMenosDeCuatroOpciones() {
         OptionsValidationFilter filter = new OptionsValidationFilter();
@@ -67,6 +87,9 @@ public class QuestionPipelineTest {
         assertFalse(filter.process(request));
     }
 
+    /**
+     * @brief Sin opciones no pasa.
+     */
     @Test
     public void testOptionsValidationFilterSinOpciones() {
         OptionsValidationFilter filter = new OptionsValidationFilter();
@@ -76,14 +99,18 @@ public class QuestionPipelineTest {
         assertFalse(filter.process(request));
     }
 
-    // ---------- ClassificationFilter ----------
-
+    /**
+     * @brief Un área de la lista pasa.
+     */
     @Test
     public void testClassificationFilterValida() {
         ClassificationFilter filter = new ClassificationFilter();
         assertTrue(filter.process(requestValida()));
     }
 
+    /**
+     * @brief Un área fuera de la lista no pasa.
+     */
     @Test
     public void testClassificationFilterInvalida() {
         ClassificationFilter filter = new ClassificationFilter();
@@ -93,6 +120,9 @@ public class QuestionPipelineTest {
         assertFalse(filter.process(request));
     }
 
+    /**
+     * @brief El área se compara sin distinguir mayúsculas.
+     */
     @Test
     public void testClassificationFilterEsCaseInsensitive() {
         ClassificationFilter filter = new ClassificationFilter();
@@ -102,14 +132,18 @@ public class QuestionPipelineTest {
         assertTrue(filter.process(request));
     }
 
-    // ---------- CorrectAnswerValidationFilter ----------
-
+    /**
+     * @brief Una respuesta que está entre las opciones pasa.
+     */
     @Test
     public void testCorrectAnswerValidationFilterRespuestaPresente() {
         CorrectAnswerValidationFilter filter = new CorrectAnswerValidationFilter();
         assertTrue(filter.process(requestValida()));
     }
 
+    /**
+     * @brief Una respuesta que no está entre las opciones no pasa.
+     */
     @Test
     public void testCorrectAnswerValidationFilterRespuestaAusente() {
         CorrectAnswerValidationFilter filter = new CorrectAnswerValidationFilter();
@@ -119,8 +153,9 @@ public class QuestionPipelineTest {
         assertFalse(filter.process(request));
     }
 
-    // ---------- QuestionPipeline completo ----------
-
+    /**
+     * @brief Una solicitud válida pasa los cuatro filtros.
+     */
     @Test
     public void testPipelineCompletoConSolicitudValida() {
         QuestionPipeline pipeline = new QuestionPipeline();
@@ -132,6 +167,9 @@ public class QuestionPipelineTest {
         assertTrue(pipeline.execute(requestValida()));
     }
 
+    /**
+     * @brief Con el título vacío, el pipeline se detiene en el primer filtro.
+     */
     @Test
     public void testPipelineCompletoSeDetieneEnElPrimerFiltroQueFalla() {
         QuestionPipeline pipeline = new QuestionPipeline();
@@ -140,8 +178,6 @@ public class QuestionPipelineTest {
         pipeline.addFilter(new ClassificationFilter());
         pipeline.addFilter(new CorrectAnswerValidationFilter());
 
-        // Título vacío: debe fallar en el primer filtro (Content) y
-        // no debe siquiera evaluar los demás.
         QuestionRequest requestInvalida = new QuestionRequest(
                 "", "Contenido", "MULTIPLE_CHOICE", "Arquitectura de software",
                 OPCIONES_VALIDAS, "Single Responsibility");

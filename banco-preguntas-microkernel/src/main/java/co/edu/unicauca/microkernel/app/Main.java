@@ -1,3 +1,10 @@
+/**
+ * @file Main.java
+ * @brief Ventana principal del banco de preguntas (Swing).
+ * @author Santiago Caicedo
+ * @author Adrian Araujo
+ * @author Ivan Alexander Lopez
+ */
 package co.edu.unicauca.microkernel.app;
 
 import co.edu.unicauca.microkernel.common.entities.Question;
@@ -12,38 +19,50 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Punto de entrada de la aplicación de escritorio (Swing).
+ * @brief Capa de presentación: formulario para crear preguntas y tabla del banco.
  *
- * Es la capa de presentación: arma la solicitud (QuestionRequest) a
- * partir de lo que el usuario diligencia en el formulario, y delega
- * toda la lógica de generación y validación al QuestionMicrokernel.
- * Esta clase nunca conoce los plugins concretos ni los filtros: solo
- * conoce el núcleo.
+ * Arma un QuestionRequest con los datos del formulario y delega la generación y la validación al
+ * QuestionMicrokernel. No conoce los plugins ni los filtros concretos: solo el núcleo.
  */
 public class Main extends JFrame {
 
+    /** Núcleo que administra los plugins y el banco de preguntas. */
     private final QuestionMicrokernel microkernel;
 
+    /** Tipo de pregunta. */
     private JComboBox<String> cmbTipo;
+    /** Título. */
     private JTextField txtTitulo;
+    /** Contenido o enunciado. */
     private JTextArea txtContenido;
+    /** Área de conocimiento. */
     private JComboBox<String> cmbClasificacion;
+    /** Primera opción (solo selección múltiple). */
     private JTextField txtOpcion1;
     private JTextField txtOpcion2;
     private JTextField txtOpcion3;
     private JTextField txtOpcion4;
+    /** Respuesta correcta (solo selección múltiple). */
     private JTextField txtRespuestaCorrecta;
+    /** Aclaración sobre las opciones. */
     private JLabel lblAyudaOpciones;
 
+    /** Datos de la tabla del banco. */
     private DefaultTableModel modeloTabla;
     private JTable tablaPreguntas;
 
+    /**
+     * @brief Crea el núcleo (que carga los plugins) y construye la ventana.
+     */
     public Main() {
         this.microkernel = new QuestionMicrokernel();
         inicializarVentana();
         crearComponentes();
     }
 
+    /**
+     * @brief Configura título, tamaño y posición de la ventana.
+     */
     private void inicializarVentana() {
         setTitle("Banco de Preguntas Saber Pro — Microkernel + Pipes & Filters");
         setSize(950, 620);
@@ -51,6 +70,9 @@ public class Main extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    /**
+     * @brief Arma el panel principal con el formulario a la izquierda y la tabla al centro.
+     */
     private void crearComponentes() {
         JPanel principal = new JPanel(new BorderLayout(10, 10));
         principal.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -66,6 +88,10 @@ public class Main extends JFrame {
         setContentPane(principal);
     }
 
+    /**
+     * @brief Construye el formulario de nueva pregunta.
+     * @return Panel del formulario
+     */
     private JPanel crearFormulario() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -114,6 +140,12 @@ public class Main extends JFrame {
         return panel;
     }
 
+    /**
+     * @brief Crea una fila con una etiqueta y su campo.
+     * @param etiqueta Texto de la etiqueta
+     * @param componente Campo de entrada
+     * @return Panel de la fila
+     */
     private JPanel campo(String etiqueta, JComponent componente) {
         JPanel fila = new JPanel(new BorderLayout(5, 2));
         fila.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -123,11 +155,16 @@ public class Main extends JFrame {
         return fila;
     }
 
+    /**
+     * @brief Construye la tabla de solo lectura con las preguntas del banco.
+     * @return Panel de la tabla
+     */
     private JPanel crearPanelTabla() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Banco de preguntas (Map<String, Question>)"));
 
         modeloTabla = new DefaultTableModel(new String[]{"ID", "Tipo", "Título", "Contenido"}, 0) {
+            /** Las celdas de la tabla no se pueden editar. */
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -139,6 +176,9 @@ public class Main extends JFrame {
         return panel;
     }
 
+    /**
+     * @brief Habilita las opciones y la respuesta correcta solo para selección múltiple.
+     */
     private void actualizarVisibilidadOpciones() {
         boolean esMultipleChoice = "MULTIPLE_CHOICE".equals(cmbTipo.getSelectedItem());
         txtOpcion1.setEnabled(esMultipleChoice);
@@ -148,6 +188,11 @@ public class Main extends JFrame {
         txtRespuestaCorrecta.setEnabled(esMultipleChoice);
     }
 
+    /**
+     * @brief Envía la solicitud al núcleo y muestra si la pregunta se agregó al banco.
+     *
+     * Si la cantidad de preguntas no cambia, la solicitud no superó las validaciones del plugin.
+     */
     private void generarPregunta() {
         String tipo = (String) cmbTipo.getSelectedItem();
         String titulo = txtTitulo.getText().trim();
@@ -194,6 +239,9 @@ public class Main extends JFrame {
         limpiarFormulario();
     }
 
+    /**
+     * @brief Vuelve a llenar la tabla con las preguntas del banco.
+     */
     private void refrescarTabla() {
         modeloTabla.setRowCount(0);
         for (Question q : microkernel.getQuestions().values()) {
@@ -201,6 +249,9 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * @brief Borra los campos de texto del formulario.
+     */
     private void limpiarFormulario() {
         txtTitulo.setText("");
         txtContenido.setText("");
@@ -211,6 +262,10 @@ public class Main extends JFrame {
         txtRespuestaCorrecta.setText("");
     }
 
+    /**
+     * @brief Abre la ventana en el hilo de eventos de Swing.
+     * @param args Argumentos de la línea de comandos
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Main ventana = new Main();

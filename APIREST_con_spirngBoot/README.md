@@ -103,3 +103,11 @@ etc.), lo cual mezcla el modelo de negocio con la persistencia. Es válido
 para un prototipo rápido, pero no separa responsabilidades; una iteración
 posterior del laboratorio abordará una metodología centrada en el negocio
 que corrija este acoplamiento.
+
+## Integrantes
+
+- Santiago Caicedo
+
+- Adrian Araujo
+
+- Ivan Alexander Lopez

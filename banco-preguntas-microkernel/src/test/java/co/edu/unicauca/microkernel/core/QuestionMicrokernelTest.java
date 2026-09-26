@@ -1,3 +1,10 @@
+/**
+ * @file QuestionMicrokernelTest.java
+ * @brief Pruebas del núcleo QuestionMicrokernel.
+ * @author Santiago Caicedo
+ * @author Adrian Araujo
+ * @author Ivan Alexander Lopez
+ */
 package co.edu.unicauca.microkernel.core;
 
 import co.edu.unicauca.microkernel.common.entities.QuestionRequest;
@@ -10,36 +17,47 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Pruebas unitarias del núcleo QuestionMicrokernel.
+ * @brief Pruebas del núcleo con la carga real de plugins desde plugins.properties.
  *
- * Estas pruebas ejercitan la carga REAL de plugins vía Reflexión desde
- * plugins.properties (tal como quedará configurado en producción), ya
- * que QuestionMicrokernel no recibe los plugins por inyección sino que
- * los descubre él mismo — es precisamente el comportamiento que el
- * patrón Microkernel busca demostrar.
+ * El núcleo descubre los plugins por reflexión en lugar de recibirlos inyectados, así que las pruebas usan
+ * la misma configuración que la aplicación.
  */
 public class QuestionMicrokernelTest {
 
+    /** Núcleo bajo prueba, nuevo en cada prueba. */
     private QuestionMicrokernel microkernel;
 
+    /** Cuatro opciones válidas de ejemplo. */
     private static final List<String> OPCIONES_VALIDAS = Arrays.asList(
             "Single Responsibility", "Open Closed", "Liskov", "Interface Segregation");
 
+    /**
+     * @brief Crea un núcleo nuevo antes de cada prueba.
+     */
     @BeforeEach
     void setUp() {
         microkernel = new QuestionMicrokernel();
     }
 
+    /**
+     * @brief Se cargan los tres plugins declarados.
+     */
     @Test
     void cargaLosTresPluginsDeclaradosEnPluginsProperties() {
         assertEquals(3, microkernel.getPlugins().size());
     }
 
+    /**
+     * @brief El banco empieza sin preguntas.
+     */
     @Test
     void elBancoDePreguntasEmpiezaVacio() {
         assertTrue(microkernel.getQuestions().isEmpty());
     }
 
+    /**
+     * @brief Una pregunta de selección múltiple válida se agrega al banco.
+     */
     @Test
     void generaYAlmacenaUnaPreguntaDeSeleccionMultipleValida() {
         QuestionRequest request = new QuestionRequest(
@@ -56,9 +74,11 @@ public class QuestionMicrokernelTest {
         assertEquals(1, microkernel.getQuestions().size());
     }
 
+    /**
+     * @brief Con solo dos opciones, OptionsValidationFilter la rechaza y no se agrega.
+     */
     @Test
     void noAlmacenaUnaPreguntaDeSeleccionMultipleQueNoPasaElPipeline() {
-        // Sin las 4 opciones requeridas: debe fallar en OptionsValidationFilter.
         QuestionRequest request = new QuestionRequest(
                 "Pregunta SOLID",
                 "¿Qué representa la S en SOLID?",
@@ -73,6 +93,9 @@ public class QuestionMicrokernelTest {
         assertTrue(microkernel.getQuestions().isEmpty());
     }
 
+    /**
+     * @brief Una pregunta de caso válida se agrega al banco.
+     */
     @Test
     void generaUnaPreguntaDeCaso() {
         QuestionRequest request = new QuestionRequest(
@@ -89,6 +112,9 @@ public class QuestionMicrokernelTest {
         assertEquals(1, microkernel.getQuestions().size());
     }
 
+    /**
+     * @brief Una pregunta multimedia válida se agrega al banco.
+     */
     @Test
     void generaUnaPreguntaMultimedia() {
         QuestionRequest request = new QuestionRequest(
@@ -105,6 +131,9 @@ public class QuestionMicrokernelTest {
         assertEquals(1, microkernel.getQuestions().size());
     }
 
+    /**
+     * @brief Un tipo sin plugin lanza IllegalArgumentException.
+     */
     @Test
     void lanzaExcepcionSiNingunPluginSoportaElTipoSolicitado() {
         QuestionRequest request = new QuestionRequest(

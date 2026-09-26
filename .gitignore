@@ -7,3 +7,8 @@ target/
 .classpath
 .DS_Store
 Thumbs.db
+
+# Documentacion generada por Doxygen
+docs/html/
+docs/latex/
+docs/doxygen-advertencias.log

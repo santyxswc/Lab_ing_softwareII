@@ -1,3 +1,10 @@
+/**
+ * @file MultimediaQuestionPlugin.java
+ * @brief Plugin de preguntas multimedia.
+ * @author Santiago Caicedo
+ * @author Adrian Araujo
+ * @author Ivan Alexander Lopez
+ */
 package co.edu.unicauca.microkernel.plugins;
 
 import co.edu.unicauca.microkernel.common.entities.Question;
@@ -8,25 +15,39 @@ import co.edu.unicauca.microkernel.pipeline.filters.ContentValidationFilter;
 import java.util.UUID;
 
 /**
- * Plugin que genera preguntas multimedia (el contenido referencia un
- * recurso audiovisual, ej. una URL de imagen o video, más una
- * pregunta asociada). Solo exige que el título y el contenido (que
- * aquí incluye la referencia al recurso) no estén vacíos.
+ * @brief Genera preguntas multimedia: el contenido incluye la referencia a un recurso (imagen o video) y la pregunta.
+ *
+ * Solo exige título y contenido.
  */
 public class MultimediaQuestionPlugin implements QuestionPlugin {
 
+    /** Valida título y contenido. */
     private final ContentValidationFilter contentValidationFilter = new ContentValidationFilter();
 
+    /**
+     * @brief Nombre del plugin.
+     * @return "multimedia-question"
+     */
     @Override
     public String getName() {
         return "multimedia-question";
     }
 
+    /**
+     * @brief Indica si el tipo es MULTIMEDIA.
+     * @param type Tipo de pregunta
+     * @return true para MULTIMEDIA
+     */
     @Override
     public boolean supports(String type) {
         return "MULTIMEDIA".equalsIgnoreCase(type);
     }
 
+    /**
+     * @brief Valida la solicitud y genera la pregunta con un id UUID.
+     * @param request Datos de la solicitud
+     * @return La pregunta, o null si no pasa las validaciones
+     */
     @Override
     public Question generate(QuestionRequest request) {
         if (!contentValidationFilter.process(request)) {

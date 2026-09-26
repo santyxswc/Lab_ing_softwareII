@@ -1,3 +1,13 @@
+/**
+ * @file app.js
+ * @brief Interfaz web para probar el CRUD de productos.
+ * @author Santiago Caicedo
+ * @author Adrian Araujo
+ * @author Ivan Alexander Lopez
+ *
+ * Página estática servida por Spring Boot en la raíz del sitio. Consume /api/productos con fetch.
+ */
+/** URL base de la API. */
 const API_URL = "/api/productos";
 
 const form = document.getElementById("producto-form");
@@ -14,6 +24,11 @@ const tbody = document.getElementById("productos-tbody");
 const emptyMsg = document.getElementById("empty-msg");
 const statusMsg = document.getElementById("status-msg");
 
+/**
+ * @brief Muestra un mensaje de estado que desaparece a los 4 segundos.
+ * @param mensaje Texto a mostrar
+ * @param tipo Clase CSS del mensaje: "success" o "error"
+ */
 function mostrarEstado(mensaje, tipo) {
   statusMsg.textContent = mensaje;
   statusMsg.className = tipo || "";
@@ -25,6 +40,9 @@ function mostrarEstado(mensaje, tipo) {
   }
 }
 
+/**
+ * @brief Deja el formulario listo para crear un producto nuevo.
+ */
 function limpiarFormulario() {
   form.reset();
   idInput.value = "";
@@ -33,6 +51,9 @@ function limpiarFormulario() {
   cancelBtn.hidden = true;
 }
 
+/**
+ * @brief Pide la lista de productos a la API y la muestra en la tabla.
+ */
 async function cargarProductos() {
   try {
     const respuesta = await fetch(API_URL);
@@ -46,6 +67,10 @@ async function cargarProductos() {
   }
 }
 
+/**
+ * @brief Dibuja la tabla de productos con sus botones Editar y Eliminar.
+ * @param productos Productos recibidos de la API
+ */
 function renderizarTabla(productos) {
   tbody.innerHTML = "";
   emptyMsg.hidden = productos.length > 0;
@@ -80,6 +105,10 @@ function renderizarTabla(productos) {
   });
 }
 
+/**
+ * @brief Carga un producto en el formulario para editarlo.
+ * @param producto Producto seleccionado
+ */
 function cargarEnFormulario(producto) {
   idInput.value = producto.id;
   nombreInput.value = producto.nombre ?? "";
@@ -92,6 +121,10 @@ function cargarEnFormulario(producto) {
   nombreInput.focus();
 }
 
+/**
+ * @brief Envía el formulario: POST si es nuevo, PUT si se está editando.
+ * @param event Evento submit del formulario
+ */
 async function guardarProducto(event) {
   event.preventDefault();
 
@@ -126,6 +159,10 @@ async function guardarProducto(event) {
   }
 }
 
+/**
+ * @brief Pide confirmación y elimina un producto.
+ * @param id Identificador del producto
+ */
 async function eliminarProducto(id) {
   if (!confirm(`¿Eliminar el producto #${id}?`)) {
     return;

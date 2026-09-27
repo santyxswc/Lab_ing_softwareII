@@ -1,11 +1,13 @@
 # Laboratorio de Ingeniería de Software II
 
+[![CI](https://github.com/santyxswc/Lab_ing_softwareII/actions/workflows/ci.yml/badge.svg)](https://github.com/santyxswc/Lab_ing_softwareII/actions/workflows/ci.yml)
+
 Talleres de arquitectura y diseño de software — Universidad del Cauca.
 
 | Taller | Carpeta | Tema |
 |---|---|---|
 | 05 | [`banco-preguntas-microkernel`](banco-preguntas-microkernel/README.md) | Patrón **Microkernel (plugins)** combinado con **Tuberías y Filtros**, con interfaz Swing |
-| 06 | [`APIREST_con_spirngBoot`](APIREST_con_spirngBoot/README.md) | **API REST** con Spring Boot, Spring Data JPA y H2 (CRUD de productos) |
+| 06 | [`productos-api`](productos-api/README.md) | **API REST** con Spring Boot, Spring Data JPA y H2 (CRUD de productos) |
 
 Cada carpeta tiene su propio README con la arquitectura, la estructura de paquetes y cómo probarla.
 
@@ -22,13 +24,13 @@ selección múltiple pasan por un pipeline de cuatro filtros de validación que 
 
 ```bash
 cd banco-preguntas-microkernel
-mvn clean test      # 19 pruebas unitarias
+mvn clean test      # 24 pruebas unitarias
 mvn exec:java       # abre la interfaz Swing
 ```
 
 ## Taller 06 — API REST de productos (Spring Boot)
 
-Microservicio con el CRUD de `Producto` en capas: modelo → repositorio → servicio → controlador. Usa una base
+Microservicio con el CRUD de `Producto` en capas: modelo → repositorio → servicio → controlador, con DTOs validados y errores en formato `ProblemDetail` (RFC 9457). Usa una base
 de datos H2 en memoria, así que no requiere instalar nada más.
 
 | Verbo | Ruta | Descripción |
@@ -40,9 +42,9 @@ de datos H2 en memoria, así que no requiere instalar nada más.
 | DELETE | `/api/productos/{id}` | Elimina un producto |
 
 ```bash
-cd APIREST_con_spirngBoot
+cd productos-api
 ./mvnw spring-boot:run    # API en http://localhost:8080/api/productos
-./mvnw test               # prueba de arranque del contexto
+./mvnw test               # 12 pruebas: servicio, capa web e integración
 ```
 
 Si al arrancar aparece `BindException: La dirección ya se está usando` (o `Port 8080 was already in use`), otro

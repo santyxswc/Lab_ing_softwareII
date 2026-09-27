@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  microkernel:
+    name: Taller 05 · Banco de preguntas (Microkernel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: banco-preguntas-microkernel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - run: mvn -B verify
+
+  productos-api:
+    name: Taller 06 · API REST de productos
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: productos-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - run: ./mvnw -B verify

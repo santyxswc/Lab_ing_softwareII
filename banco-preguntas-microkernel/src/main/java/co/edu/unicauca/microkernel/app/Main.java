@@ -214,18 +214,15 @@ public class Main extends JFrame {
         QuestionRequest request = new QuestionRequest(
                 titulo, contenido, tipo, clasificacion, opciones, respuestaCorrecta);
 
-        int totalAntes = microkernel.getQuestions().size();
-
+        boolean agregada;
         try {
-            microkernel.executePlugin(tipo, request);
+            agregada = microkernel.executePlugin(tipo, request).isPresent();
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        int totalDespues = microkernel.getQuestions().size();
-
-        if (totalDespues == totalAntes) {
+        if (!agregada) {
             JOptionPane.showMessageDialog(this,
                     "La solicitud no superó las validaciones del pipeline de filtros.\n"
                             + "Revisa la consola para ver en qué filtro falló.",

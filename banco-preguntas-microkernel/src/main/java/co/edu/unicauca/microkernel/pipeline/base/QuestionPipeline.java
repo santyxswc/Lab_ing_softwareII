@@ -11,16 +11,19 @@ import co.edu.unicauca.microkernel.common.entities.QuestionRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @brief Ejecuta los filtros en orden y se detiene en el primero que falla (fail-fast).
  *
- * Informa en la consola qué filtro rechazó la solicitud.
+ * Registra en el log qué filtro rechazó la solicitud.
  */
 public class QuestionPipeline {
 
+    private static final Logger LOG = Logger.getLogger(QuestionPipeline.class.getName());
+
     /** Filtros en el orden en que se ejecutan. */
-    private List<QuestionFilter> filters = new ArrayList<>();
+    private final List<QuestionFilter> filters = new ArrayList<>();
 
     /**
      * @brief Agrega un filtro al final de la tubería.
@@ -38,8 +41,7 @@ public class QuestionPipeline {
     public boolean execute(QuestionRequest request) {
         for (QuestionFilter filter : filters) {
             if (!filter.process(request)) {
-                System.err.println("La validación falló en el filtro: "
-                        + filter.getClass().getSimpleName());
+                LOG.warning(() -> "La validación falló en el filtro: " + filter.getClass().getSimpleName());
                 return false;
             }
         }

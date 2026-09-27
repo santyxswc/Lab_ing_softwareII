@@ -11,95 +11,83 @@ import co.edu.unicauca.microkernel.common.entities.Question;
 import co.edu.unicauca.microkernel.common.entities.QuestionRequest;
 import co.edu.unicauca.microkernel.common.interfaces.QuestionPlugin;
 
-import java.io.InputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Logger;
 
 /**
- * @brief Núcleo que carga los plugins y administra el banco de preguntas.
+ * @brief Núcleo que delega cada solicitud en el plugin que la soporta y administra el banco de preguntas.
  *
- * Lee plugins.properties, que asocia claves a nombres completos de clases, e instancia cada plugin con
- * reflexión (Class.forName y getDeclaredConstructor().newInstance()). Así el núcleo no depende en tiempo
- * de compilación de ninguna clase concreta: agregar un tipo de pregunta solo requiere una clase nueva
- * y una línea en plugins.properties.
+ * El núcleo depende solo de la interfaz QuestionPlugin (inversión de dependencias): recibe los plugins
+ * por constructor, así que las pruebas pueden inyectar plugins propios. El constructor sin argumentos
+ * los descubre con PluginLoader a partir de plugins.properties; agregar un tipo de pregunta solo requiere
+ * una clase nueva y una línea en ese archivo, sin modificar el núcleo (abierto/cerrado).
  */
 public class QuestionMicrokernel {
 
-    /** Banco de preguntas, por id. */
-    private Map<String, Question> questions = new HashMap<>();
-    /** Plugins cargados. */
-    private List<QuestionPlugin> plugins = new ArrayList<>();
+    private static final Logger LOG = Logger.getLogger(QuestionMicrokernel.class.getName());
+
+    /** Banco de preguntas, por id, en orden de creación. */
+    private final Map<String, Question> questions = new LinkedHashMap<>();
+    /** Plugins disponibles. */
+    private final List<QuestionPlugin> plugins;
 
     /**
-     * @brief Crea el núcleo y carga los plugins.
+     * @brief Crea el núcleo con los plugins declarados en plugins.properties.
+     * @throws IllegalStateException Si el registro no existe o un plugin no se puede cargar
      */
     public QuestionMicrokernel() {
-        loadPlugins();
+        this(PluginLoader.desdeClasspath(PluginLoader.REGISTRO_POR_DEFECTO));
     }
 
     /**
-     * @brief Instancia con reflexión cada plugin declarado en plugins.properties.
-     *
-     * Los errores de carga se informan en la consola y no detienen la aplicación.
+     * @brief Crea el núcleo con un conjunto explícito de plugins.
+     * @param plugins Plugins disponibles
      */
-    private void loadPlugins() {
-        try {
-            Properties prop = new Properties();
-            InputStream input = getClass().getClassLoader().getResourceAsStream("plugins.properties");
-            if (input == null) {
-                System.err.println("No se encontró el archivo plugins.properties");
-                return;
-            }
-            prop.load(input);
-
-            for (String key : prop.stringPropertyNames()) {
-                String className = prop.getProperty(key);
-
-                Class<?> clazz = Class.forName(className);
-                QuestionPlugin plugin = (QuestionPlugin) clazz.getDeclaredConstructor().newInstance();
-                plugins.add(plugin);
-                System.out.println("Plugin cargado vía reflexión: " + plugin.getName()
-                        + " (" + className + ")");
-            }
-        } catch (Exception e) {
-            System.err.println("Error al cargar plugins vía reflexión: " + e.getMessage());
-        }
+    public QuestionMicrokernel(List<QuestionPlugin> plugins) {
+        this.plugins = List.copyOf(Objects.requireNonNull(plugins, "plugins"));
     }
 
     /**
-     * @brief Delega la generación al primer plugin que soporte el tipo y guarda la pregunta si es válida.
-     * @param type Tipo de pregunta
-     * @param request Datos de la solicitud
+     * @brief Genera una pregunta con el plugin que soporta el tipo y la agrega al banco.
+     * @param type Tipo de pregunta (por ejemplo "MULTIPLE_CHOICE")
+     * @param request Datos de la pregunta
+     * @return La pregunta agregada, o vacío si el plugin rechazó la solicitud en sus validaciones
      * @throws IllegalArgumentException Si ningún plugin soporta el tipo
      */
-    public void executePlugin(String type, QuestionRequest request) {
-        for (QuestionPlugin plugin : plugins) {
-            if (plugin.supports(type)) {
-                Question question = plugin.generate(request);
-                if (question != null) {
-                    questions.put(question.getId(), question);
-                    System.out.println("Pregunta agregada exitosamente al banco con ID: "
-                            + question.getId());
-                } else {
-                    System.err.println("El plugin " + plugin.getName()
-                            + " rechazó la solicitud (no superó sus validaciones).");
-                }
-                return;
-            }
+    public Optional<Question> executePlugin(String type, QuestionRequest request) {
+        QuestionPlugin plugin = plugins.stream()
+                .filter(p -> p.supports(type))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No hay ningún plugin registrado que soporte el tipo: " + type));
+
+        Question question = plugin.generate(request);
+        if (question == null) {
+            LOG.warning(() -> "El plugin " + plugin.getName() + " rechazó la solicitud (no superó sus validaciones).");
+            return Optional.empty();
         }
-        throw new IllegalArgumentException("No hay ningún plugin registrado que soporte el tipo: " + type);
+
+        questions.put(question.getId(), question);
+        LOG.info(() -> "Pregunta agregada al banco con ID: " + question.getId());
+        return Optional.of(question);
     }
 
     /**
-     * @brief Obtiene el banco de preguntas.
-     * @return Preguntas por id
+     * @brief Preguntas del banco.
+     * @return Vista de solo lectura, por id
      */
     public Map<String, Question> getQuestions() {
-        return questions;
+        return Collections.unmodifiableMap(questions);
     }
 
     /**
-     * @brief Obtiene los plugins cargados.
-     * @return Plugins
+     * @brief Plugins disponibles.
+     * @return Lista inmutable
      */
     public List<QuestionPlugin> getPlugins() {
         return plugins;

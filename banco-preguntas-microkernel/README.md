@@ -8,7 +8,8 @@ Taller 05 del Laboratorio de Ingeniería de Software II — Universidad del Cauc
 Main (Swing)
    │
    ▼
-QuestionMicrokernel  ──(Reflexión, plugins.properties)──► QuestionPlugin (interfaz)
+QuestionMicrokernel ◄── PluginLoader (Reflexión, plugins.properties)
+   │                   recibe List<QuestionPlugin> ──────────► QuestionPlugin (interfaz)
    │  Map<String, Question>                                     ▲
    │                                                             │
    │                                          MultipleChoiceQuestionPlugin
@@ -23,7 +24,8 @@ QuestionMicrokernel  ──(Reflexión, plugins.properties)──► QuestionPlu
                                                          CorrectAnswerValidationFilter)
 ```
 
-- **Microkernel**: `QuestionMicrokernel` no conoce en tiempo de compilación ninguna clase de plugin concreta. Lee `plugins.properties` y usa `Class.forName(...).getDeclaredConstructor().newInstance()` (Reflexión) para instanciar cada plugin — el mismo mecanismo visto en clase con `DeliveryPluginManager` para el envío de paquetes a distintos países.
+- **Microkernel**: `QuestionMicrokernel` no conoce en tiempo de compilación ninguna clase de plugin concreta: recibe una `List<QuestionPlugin>` por constructor. `PluginLoader` lee `plugins.properties` y usa `Class.forName(...).getDeclaredConstructor().newInstance()` (Reflexión) para instanciarlos — el mismo mecanismo visto en clase con `DeliveryPluginManager`. Separar el descubrimiento de plugins del núcleo permite probar el núcleo con plugins propios y cambiar la forma de cargarlos sin tocarlo.
+- `executePlugin` devuelve `Optional<Question>`: vacío si el plugin rechazó la solicitud en sus validaciones. El banco y la lista de plugins se exponen como colecciones de solo lectura, y los mensajes van a `java.util.logging` en lugar de `System.out`.
 
 - **Pipes & Filters**: `QuestionPipeline` ejecuta una lista de `QuestionFilter` en orden, deteniéndose (fail-fast) en el primero que falle. `MultipleChoiceQuestionPlugin` integra los 4 filtros obligatorios.
 
@@ -37,7 +39,7 @@ co.edu.unicauca.microkernel
 ├── common
 │   ├── entities    → Question, QuestionRequest
 │   └── interfaces  → QuestionPlugin
-├── core         → QuestionMicrokernel
+├── core         → QuestionMicrokernel, PluginLoader
 ├── pipeline
 │   ├── base     → QuestionFilter, QuestionPipeline
 │   └── filters  → los 4 filtros de validación
@@ -65,6 +67,8 @@ mvn exec:java          # abre la interfaz Swing
 - `QuestionPipelineTest`: cada uno de los 4 filtros probado de forma aislada (caso válido e inválido), más el pipeline completo ensamblado.
 
 - `QuestionMicrokernelTest`: carga real de los 3 plugins vía Reflexión, generación exitosa para cada tipo de pregunta, rechazo de una solicitud que no pasa el pipeline, y excepción al pedir un tipo no soportado.
+
+- `PluginInjectionTest`: el núcleo con plugins inyectados (sin reflexión), resultado vacío al rechazar, colecciones de solo lectura, orden determinista de carga y errores claros del cargador.
 
 ## Integrantes
 

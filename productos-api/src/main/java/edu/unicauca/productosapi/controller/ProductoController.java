@@ -31,8 +31,7 @@ import edu.unicauca.productosapi.service.ProductoService;
 /**
  * @brief Expone las operaciones CRUD de Producto en /api/productos.
  *
- * Solo traduce HTTP a llamadas del servicio: valida la entrada (@Valid), elige el código de estado y
- * nunca expone la entidad JPA. Los errores los traduce ManejadorGlobalExcepciones.
+ * Valida la entrada y elige el código de estado; los errores los traduce ManejadorGlobalExcepciones.
  */
 @RestController
 @RequestMapping("/api/productos")

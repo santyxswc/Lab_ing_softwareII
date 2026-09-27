@@ -20,23 +20,25 @@ import java.util.logging.Logger;
  * @brief Instancia por reflexión los plugins registrados en un archivo .properties del classpath.
  *
  * Cada entrada asocia una clave con el nombre completo de una clase que implementa QuestionPlugin.
- * Se separa del núcleo para que QuestionMicrokernel solo administre plugins y preguntas: cómo se
- * descubren los plugins es una responsabilidad distinta (y reemplazable).
  */
 public final class PluginLoader {
 
     /** Archivo de registro por defecto. */
     public static final String REGISTRO_POR_DEFECTO = "plugins.properties";
 
+    /** Registro de mensajes. */
     private static final Logger LOG = Logger.getLogger(PluginLoader.class.getName());
 
+    /**
+     * @brief Clase de utilidades: no se instancia.
+     */
     private PluginLoader() {
     }
 
     /**
      * @brief Carga los plugins declarados en un recurso del classpath.
      * @param recurso Nombre del archivo, por ejemplo "plugins.properties"
-     * @return Plugins en el orden de sus claves
+     * @return Plugins ordenados por clave (Properties no conserva el orden del archivo)
      * @throws IllegalStateException Si el archivo no existe o una clase no se puede instanciar
      */
     public static List<QuestionPlugin> desdeClasspath(String recurso) {
@@ -51,7 +53,6 @@ public final class PluginLoader {
         }
 
         List<QuestionPlugin> plugins = new ArrayList<>();
-        // Properties no conserva el orden del archivo: se ordena por clave para cargar siempre igual.
         for (String clave : registro.stringPropertyNames().stream().sorted().toList()) {
             plugins.add(instanciar(registro.getProperty(clave).trim()));
         }

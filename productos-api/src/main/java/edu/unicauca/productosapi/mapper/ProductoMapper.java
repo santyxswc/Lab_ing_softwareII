@@ -16,6 +16,9 @@ import edu.unicauca.productosapi.model.Producto;
  */
 public final class ProductoMapper {
 
+    /**
+     * @brief Clase de utilidades: no se instancia.
+     */
     private ProductoMapper() {
     }
 

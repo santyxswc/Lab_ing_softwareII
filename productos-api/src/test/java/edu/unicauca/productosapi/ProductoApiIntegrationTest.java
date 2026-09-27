@@ -34,12 +34,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ProductoApiIntegrationTest {
 
+    /** Cliente HTTP simulado. */
     @Autowired
     private MockMvc mvc;
 
+    /** Lector de las respuestas JSON. */
     @Autowired
     private ObjectMapper json;
 
+    /**
+     * @brief Crea un producto por la API.
+     * @param cuerpo JSON del producto
+     * @return Id asignado
+     */
     private long crear(String cuerpo) throws Exception {
         String respuesta = mvc.perform(post("/api/productos").contentType(MediaType.APPLICATION_JSON).content(cuerpo))
                 .andExpect(status().isCreated())
@@ -47,6 +54,9 @@ class ProductoApiIntegrationTest {
         return json.readTree(respuesta).get("id").asLong();
     }
 
+    /**
+     * @brief Crea, consulta, actualiza y elimina un producto; después la consulta responde 404.
+     */
     @Test
     void cicloCompletoCrearConsultarActualizarEliminar() throws Exception {
         long id = crear("{\"nombre\":\"Cuaderno\",\"descripcion\":\"100 hojas\",\"precio\":4500.50,\"stock\":12}");
@@ -64,6 +74,9 @@ class ProductoApiIntegrationTest {
         mvc.perform(get("/api/productos/" + id)).andExpect(status().isNotFound());
     }
 
+    /**
+     * @brief Un id en el cuerpo de un POST crea un producto nuevo y no modifica el existente.
+     */
     @Test
     void unIdEnElCuerpoDelPostNoSobrescribeOtroProducto() throws Exception {
         long original = crear("{\"nombre\":\"Original\",\"precio\":100,\"stock\":1}");

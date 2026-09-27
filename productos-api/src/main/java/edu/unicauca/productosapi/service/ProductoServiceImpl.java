@@ -39,26 +39,44 @@ public class ProductoServiceImpl implements ProductoService {
         this.productoRepository = productoRepository;
     }
 
-    /** @copydoc ProductoService::listarTodos */
+    /**
+     * @brief Lista todos los productos.
+     * @return Productos registrados
+     */
     @Override
     public List<ProductoResponse> listarTodos() {
         return productoRepository.findAll().stream().map(ProductoMapper::aRespuesta).toList();
     }
 
-    /** @copydoc ProductoService::buscarPorId */
+    /**
+     * @brief Busca un producto.
+     * @param id Identificador
+     * @return Producto encontrado
+     * @throws ProductoNoEncontradoException Si no existe
+     */
     @Override
     public ProductoResponse buscarPorId(Long id) {
         return ProductoMapper.aRespuesta(obtener(id));
     }
 
-    /** @copydoc ProductoService::crear */
+    /**
+     * @brief Registra un producto.
+     * @param producto Datos validados del producto
+     * @return Producto guardado, con su id
+     */
     @Override
     @Transactional
     public ProductoResponse crear(ProductoRequest producto) {
         return ProductoMapper.aRespuesta(productoRepository.save(ProductoMapper.aEntidad(producto)));
     }
 
-    /** @copydoc ProductoService::actualizar */
+    /**
+     * @brief Reemplaza los datos de un producto.
+     * @param id Identificador
+     * @param producto Datos nuevos, validados
+     * @return Producto actualizado
+     * @throws ProductoNoEncontradoException Si no existe
+     */
     @Override
     @Transactional
     public ProductoResponse actualizar(Long id, ProductoRequest producto) {
@@ -67,7 +85,11 @@ public class ProductoServiceImpl implements ProductoService {
         return ProductoMapper.aRespuesta(productoRepository.save(existente));
     }
 
-    /** @copydoc ProductoService::eliminar */
+    /**
+     * @brief Elimina un producto.
+     * @param id Identificador
+     * @throws ProductoNoEncontradoException Si no existe
+     */
     @Override
     @Transactional
     public void eliminar(Long id) {

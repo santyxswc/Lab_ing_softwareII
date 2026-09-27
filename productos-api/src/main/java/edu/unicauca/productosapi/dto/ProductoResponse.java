@@ -10,7 +10,7 @@ package edu.unicauca.productosapi.dto;
 import java.math.BigDecimal;
 
 /**
- * @brief Producto tal como lo ve el cliente de la API; desacopla el contrato HTTP de la entidad JPA.
+ * @brief Producto en las respuestas de la API.
  *
  * @param id Identificador
  * @param nombre Nombre

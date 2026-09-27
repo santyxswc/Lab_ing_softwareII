@@ -10,7 +10,7 @@ package co.edu.unicauca.microkernel.pipeline.base;
 import co.edu.unicauca.microkernel.common.entities.QuestionRequest;
 
 /**
- * @brief Filtro del pipeline: valida una sola regla (principio de responsabilidad única).
+ * @brief Filtro del pipeline: valida una sola regla.
  *
  * Un filtro no conoce a los demás filtros ni al pipeline que los ejecuta.
  */

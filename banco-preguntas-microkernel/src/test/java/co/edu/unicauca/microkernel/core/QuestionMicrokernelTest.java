@@ -19,8 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @brief Pruebas del núcleo con la carga real de plugins desde plugins.properties.
  *
- * El núcleo descubre los plugins por reflexión en lugar de recibirlos inyectados, así que las pruebas usan
- * la misma configuración que la aplicación.
+ * Usa la misma configuración de plugins que la aplicación (plugins.properties).
  */
 public class QuestionMicrokernelTest {
 

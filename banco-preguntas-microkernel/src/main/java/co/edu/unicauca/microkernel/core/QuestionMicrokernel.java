@@ -22,13 +22,13 @@ import java.util.logging.Logger;
 /**
  * @brief Núcleo que delega cada solicitud en el plugin que la soporta y administra el banco de preguntas.
  *
- * El núcleo depende solo de la interfaz QuestionPlugin (inversión de dependencias): recibe los plugins
- * por constructor, así que las pruebas pueden inyectar plugins propios. El constructor sin argumentos
- * los descubre con PluginLoader a partir de plugins.properties; agregar un tipo de pregunta solo requiere
- * una clase nueva y una línea en ese archivo, sin modificar el núcleo (abierto/cerrado).
+ * Recibe los plugins por constructor; el constructor sin argumentos los carga desde
+ * plugins.properties con PluginLoader. Para agregar un tipo de pregunta basta con una clase
+ * nueva y una línea en ese archivo.
  */
 public class QuestionMicrokernel {
 
+    /** Registro de mensajes. */
     private static final Logger LOG = Logger.getLogger(QuestionMicrokernel.class.getName());
 
     /** Banco de preguntas, por id, en orden de creación. */

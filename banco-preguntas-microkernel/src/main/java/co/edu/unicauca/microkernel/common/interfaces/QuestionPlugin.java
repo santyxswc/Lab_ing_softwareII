@@ -14,7 +14,7 @@ import co.edu.unicauca.microkernel.common.entities.QuestionRequest;
  * @brief Contrato que cumplen todos los plugins que generan preguntas.
  *
  * El núcleo solo depende de esta abstracción, nunca de las implementaciones concretas
- * (principio de inversión de dependencias).
+ *.
  */
 public interface QuestionPlugin {
 

@@ -19,8 +19,7 @@ import jakarta.validation.constraints.Size;
 /**
  * @brief Cuerpo JSON de POST y PUT /api/productos.
  *
- * No incluye el id: lo asigna la base de datos al crear y lo indica la ruta al actualizar,
- * así un cliente no puede sobrescribir otro registro enviando un id en el cuerpo.
+ * No incluye el id: lo asigna la base de datos al crear y lo indica la ruta al actualizar.
  *
  * @param nombre Nombre (obligatorio, hasta 100 caracteres)
  * @param descripcion Descripción opcional (hasta 500 caracteres)

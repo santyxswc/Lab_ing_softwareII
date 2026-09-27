@@ -20,6 +20,7 @@ import java.util.logging.Logger;
  */
 public class QuestionPipeline {
 
+    /** Registro de mensajes. */
     private static final Logger LOG = Logger.getLogger(QuestionPipeline.class.getName());
 
     /** Filtros en el orden en que se ejecutan. */

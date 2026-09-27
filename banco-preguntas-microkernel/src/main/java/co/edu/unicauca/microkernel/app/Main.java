@@ -39,8 +39,11 @@ public class Main extends JFrame {
     private JComboBox<String> cmbClasificacion;
     /** Primera opción (solo selección múltiple). */
     private JTextField txtOpcion1;
+    /** Segunda opción (solo selección múltiple). */
     private JTextField txtOpcion2;
+    /** Tercera opción (solo selección múltiple). */
     private JTextField txtOpcion3;
+    /** Cuarta opción (solo selección múltiple). */
     private JTextField txtOpcion4;
     /** Respuesta correcta (solo selección múltiple). */
     private JTextField txtRespuestaCorrecta;
@@ -49,6 +52,7 @@ public class Main extends JFrame {
 
     /** Datos de la tabla del banco. */
     private DefaultTableModel modeloTabla;
+    /** Tabla con las preguntas del banco. */
     private JTable tablaPreguntas;
 
     /**
@@ -191,7 +195,7 @@ public class Main extends JFrame {
     /**
      * @brief Envía la solicitud al núcleo y muestra si la pregunta se agregó al banco.
      *
-     * Si la cantidad de preguntas no cambia, la solicitud no superó las validaciones del plugin.
+     * Si el núcleo no devuelve una pregunta, la solicitud no superó las validaciones del plugin.
      */
     private void generarPregunta() {
         String tipo = (String) cmbTipo.getSelectedItem();

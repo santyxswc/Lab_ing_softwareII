@@ -27,7 +27,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  * @brief Convierte las excepciones en respuestas application/problem+json (RFC 9457).
  *
  * Todas las respuestas de error tienen la misma forma: type, title, status, detail e instance,
- * más un mapa "errores" campo → mensaje cuando la validación falla.
+ * más un mapa "errores" con el mensaje de cada campo cuando la validación falla.
  */
 @RestControllerAdvice
 public class ManejadorGlobalExcepciones extends ResponseEntityExceptionHandler {

@@ -37,12 +37,17 @@ import edu.unicauca.productosapi.service.ProductoService;
 @WebMvcTest(ProductoController.class)
 class ProductoControllerTest {
 
+    /** Cliente HTTP simulado. */
     @Autowired
     private MockMvc mvc;
 
+    /** Servicio simulado. */
     @MockBean
     private ProductoService servicio;
 
+    /**
+     * @brief Crear responde 201 con la cabecera Location del nuevo producto.
+     */
     @Test
     void crearResponde201ConLaUbicacionDelNuevoRecurso() throws Exception {
         when(servicio.crear(any())).thenReturn(new ProductoResponse(5L, "Lápiz", null, new BigDecimal("1200.00"), 30));
@@ -54,6 +59,9 @@ class ProductoControllerTest {
                 .andExpect(jsonPath("$.id").value(5));
     }
 
+    /**
+     * @brief Datos no válidos responden 400 con el error de cada campo y sin llamar al servicio.
+     */
     @Test
     void datosInvalidosResponden400ConElErrorDeCadaCampo() throws Exception {
         mvc.perform(post("/api/productos").contentType(MediaType.APPLICATION_JSON)
@@ -68,6 +76,9 @@ class ProductoControllerTest {
         verifyNoInteractions(servicio);
     }
 
+    /**
+     * @brief Un producto inexistente responde 404 en formato ProblemDetail.
+     */
     @Test
     void unProductoInexistenteResponde404EnFormatoProblemDetail() throws Exception {
         when(servicio.buscarPorId(42L)).thenThrow(new ProductoNoEncontradoException(42L));
@@ -78,12 +89,18 @@ class ProductoControllerTest {
                 .andExpect(jsonPath("$.detail").value("No se encontró el producto con id 42"));
     }
 
+    /**
+     * @brief Un id menor o igual a cero responde 400.
+     */
     @Test
     void unIdNoPositivoResponde400() throws Exception {
         mvc.perform(get("/api/productos/0")).andExpect(status().isBadRequest());
         verifyNoInteractions(servicio);
     }
 
+    /**
+     * @brief Eliminar responde 204, o 404 si el producto no existe.
+     */
     @Test
     void eliminarResponde204Y404SiNoExiste() throws Exception {
         mvc.perform(delete("/api/productos/1")).andExpect(status().isNoContent());

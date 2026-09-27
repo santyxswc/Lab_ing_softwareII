@@ -36,18 +36,29 @@ import edu.unicauca.productosapi.repository.ProductoRepository;
 @ExtendWith(MockitoExtension.class)
 class ProductoServiceImplTest {
 
+    /** Repositorio simulado. */
     @Mock
     private ProductoRepository repositorio;
 
+    /** Servicio bajo prueba. */
     @InjectMocks
     private ProductoServiceImpl servicio;
 
+    /**
+     * @brief Producto ya guardado en la base.
+     * @param id Id
+     * @param nombre Nombre
+     * @return Entidad con id
+     */
     private static Producto guardado(long id, String nombre) {
         Producto p = new Producto(nombre, "desc", new BigDecimal("1500.00"), 10);
         p.setId(id);
         return p;
     }
 
+    /**
+     * @brief Listar devuelve cada entidad como ProductoResponse.
+     */
     @Test
     void listarConvierteLasEntidadesEnRespuestas() {
         when(repositorio.findAll()).thenReturn(List.of(guardado(1, "Lápiz"), guardado(2, "Cuaderno")));
@@ -55,6 +66,9 @@ class ProductoServiceImplTest {
         assertThat(servicio.listarTodos()).extracting(ProductoResponse::nombre).containsExactly("Lápiz", "Cuaderno");
     }
 
+    /**
+     * @brief Crear guarda una entidad sin id y con el nombre sin espacios en los extremos.
+     */
     @Test
     void crearGuardaUnaEntidadNuevaSinIdYRecortaElNombre() {
         when(repositorio.save(any())).thenAnswer(inv -> {
@@ -70,6 +84,9 @@ class ProductoServiceImplTest {
         assertThat(creado.nombre()).isEqualTo("Borrador");
     }
 
+    /**
+     * @brief Actualizar copia los datos nuevos sobre el producto existente.
+     */
     @Test
     void actualizarModificaElProductoExistente() {
         Producto existente = guardado(3, "Regla");
@@ -83,6 +100,9 @@ class ProductoServiceImplTest {
         assertThat(existente.getDescripcion()).isEqualTo("Metálica");
     }
 
+    /**
+     * @brief Actualizar o eliminar un producto inexistente falla sin guardar ni borrar nada.
+     */
     @Test
     void actualizarOEliminarUnProductoInexistenteFallaSinTocarLaBase() {
         when(repositorio.findById(99L)).thenReturn(Optional.empty());

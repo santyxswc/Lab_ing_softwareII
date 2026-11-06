@@ -1,0 +1,39 @@
+# @file application.yml
+# @brief Configuración de Question Service.
+# @author Santiago Caicedo
+server:
+  port: 8083
+
+spring:
+  application:
+    name: question-service
+
+  # Base de datos H2 en archivo (Punto 3): ./data/questiondb.mv.db
+  # Ejecutar los servicios desde la raíz del proyecto. Consola: http://localhost:8083/h2-console
+  datasource:
+    url: jdbc:h2:file:./data/questiondb
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+  # RabbitMQ (Punto 2.2). Consola: http://localhost:15672 (guest/guest)
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        default-requeue-rejected: false
+
+# URL del microservicio de validación (Punto 2.1)
+services:
+  validation:
+    url: http://localhost:8082

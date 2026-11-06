@@ -1,0 +1,511 @@
+{
+  "info": {
+    "name": "Saber PRO - Parcial 2 (Santiago Caicedo)",
+    "description": "Matriz de pruebas del parcial. Ejecutar en orden con el Collection Runner. Requiere RabbitMQ y los 3 servicios arriba.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Validation Service (:8082)",
+      "item": [
+        {
+          "name": "Validar justificación válida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8082/validate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8082",
+              "path": [
+                "validate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"justification\": \"Justificación con más de quince caracteres.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 y valid=true', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().valid).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validar justificación corta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8082/validate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8082",
+              "path": [
+                "validate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"justification\": \"corta\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('valid=false', () => pm.expect(pm.response.json().valid).to.be.false);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Question Service (:8083) - REST síncrono",
+      "item": [
+        {
+          "name": "Crear pregunta válida → 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Question Service llama por RestTemplate a Validation Service; justificación > 15 caracteres → se guarda en DRAFT.",
+            "url": {
+              "raw": "http://localhost:8083/questions",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statement\": \"¿Qué patrón GoF permite que un objeto cambie su comportamiento cuando cambia su estado interno?\",\n  \"justification\": \"El patrón State encapsula cada estado en una clase y delega en ella el comportamiento.\",\n  \"options\": [\n    {\n      \"label\": \"A\",\n      \"text\": \"Builder\"\n    },\n    {\n      \"label\": \"B\",\n      \"text\": \"State\"\n    },\n    {\n      \"label\": \"C\",\n      \"text\": \"Adapter\"\n    },\n    {\n      \"label\": \"D\",\n      \"text\": \"Facade\"\n    }\n  ],\n  \"correctAnswer\": \"B\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Estado DRAFT', () => pm.expect(pm.response.json().status).to.eql('DRAFT'));",
+                  "pm.collectionVariables.set('questionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con justificación corta → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Validation Service rechaza; NO se guarda el registro.",
+            "url": {
+              "raw": "http://localhost:8083/questions",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statement\": \"¿Qué patrón GoF permite que un objeto cambie su comportamiento cuando cambia su estado interno?\",\n  \"justification\": \"Muy corta\",\n  \"options\": [\n    {\n      \"label\": \"A\",\n      \"text\": \"Builder\"\n    },\n    {\n      \"label\": \"B\",\n      \"text\": \"State\"\n    },\n    {\n      \"label\": \"C\",\n      \"text\": \"Adapter\"\n    },\n    {\n      \"label\": \"D\",\n      \"text\": \"Facade\"\n    }\n  ],\n  \"correctAnswer\": \"B\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear con 3 opciones → 400 (Builder)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8083/questions",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statement\": \"¿Qué patrón GoF permite que un objeto cambie su comportamiento cuando cambia su estado interno?\",\n  \"justification\": \"El patrón State encapsula cada estado en una clase y delega en ella el comportamiento.\",\n  \"options\": [\n    {\n      \"label\": \"A\",\n      \"text\": \"Builder\"\n    },\n    {\n      \"label\": \"B\",\n      \"text\": \"State\"\n    },\n    {\n      \"label\": \"C\",\n      \"text\": \"Adapter\"\n    }\n  ],\n  \"correctAnswer\": \"B\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar preguntas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8083/questions",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Envío a revisión - AMQP asíncrono",
+      "item": [
+        {
+          "name": "Enviar a revisión → 202",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "Publica SubmitQuestionForReview en saberpro.direct.exchange (routing key question.submit).",
+            "url": {
+              "raw": "http://localhost:8083/questions/{{questionId}}/submit",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions",
+                "{{questionId}}",
+                "submit"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('202 Accepted', () => pm.response.to.have.status(202));",
+                  "pm.test('Trae operationId', () => pm.expect(pm.response.json().operationId).to.be.a('string'));",
+                  "pm.collectionVariables.set('operationId', pm.response.json().operationId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar pregunta (PENDING_REVIEW)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Si falla, esperar 1 s y repetir: el procesamiento es asíncrono.",
+            "url": {
+              "raw": "http://localhost:8083/questions/{{questionId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions",
+                "{{questionId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado PENDING_REVIEW', () => pm.expect(pm.response.json().status).to.eql('PENDING_REVIEW'));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Espera a que Lifecycle Service procese el mensaje asíncrono",
+                  "setTimeout(() => {}, 1500);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lifecycle: estado de la pregunta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8084/lifecycle/questions/{{questionId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8084",
+              "path": [
+                "lifecycle",
+                "questions",
+                "{{questionId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Espera a que Lifecycle Service procese el mensaje asíncrono",
+                  "setTimeout(() => {}, 1500);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lifecycle: resultado de la operación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8084/lifecycle/operations/{{operationId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8084",
+              "path": [
+                "lifecycle",
+                "operations",
+                "{{operationId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('APPLIED', () => pm.expect(pm.response.json().outcome).to.eql('APPLIED'));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Espera a que Lifecycle Service procese el mensaje asíncrono",
+                  "setTimeout(() => {}, 1500);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reenviar a revisión (State la rechaza)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "Se acepta el comando, pero PendingReviewState lo rechaza en Lifecycle Service.",
+            "url": {
+              "raw": "http://localhost:8083/questions/{{questionId}}/submit",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions",
+                "{{questionId}}",
+                "submit"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('202 Accepted', () => pm.response.to.have.status(202));",
+                  "pm.collectionVariables.set('operationId2', pm.response.json().operationId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lifecycle: segunda operación REJECTED",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8084/lifecycle/operations/{{operationId2}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8084",
+              "path": [
+                "lifecycle",
+                "operations",
+                "{{operationId2}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('REJECTED', () => pm.expect(pm.response.json().outcome).to.eql('REJECTED'));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Espera a que Lifecycle Service procese el mensaje asíncrono",
+                  "setTimeout(() => {}, 1500);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enviar pregunta inexistente → 404",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "",
+            "url": {
+              "raw": "http://localhost:8083/questions/9999/submit",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "questions",
+                "9999",
+                "submit"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "questionId",
+      "value": "1"
+    },
+    {
+      "key": "operationId",
+      "value": ""
+    },
+    {
+      "key": "operationId2",
+      "value": ""
+    }
+  ]
+}

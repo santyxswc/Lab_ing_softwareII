@@ -1,0 +1,13 @@
+# @file docker-compose.yml
+# @brief Levanta RabbitMQ con la consola de administración.
+# @author Santiago Caicedo
+#
+# Uso: docker compose up -d
+# Consola: http://localhost:15672 (guest / guest)
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: saberpro-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP (lo usan los microservicios)
+      - "15672:15672"   # Consola web

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  @file pom.xml
+  @brief POM agregador del Banco de Preguntas Saber PRO.
+  @author Santiago Caicedo
+
+  Compila los tres microservicios con un solo "mvn clean install".
+  Cada módulo es una aplicación Spring Boot independiente.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.16</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>co.edu.unicauca.saberpro</groupId>
+    <artifactId>saberpro-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>Banco de Preguntas Saber PRO</name>
+    <description>Parcial 2 - Laboratorio de Ingeniería de Software II</description>
+
+    <modules>
+        <module>validation-service</module>
+        <module>question-service</module>
+        <module>lifecycle-service</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- spring-boot:run arranca desde la raíz del proyecto, así la
+                     ruta relativa de H2 (./data) es la misma que con java -jar. -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                    </configuration>
+                </plugin>
+                <!-- Las etiquetas @file y @brief (estilo Doxygen) se registran
+                     para que javadoc no las marque como desconocidas. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <configuration>
+                        <tags>
+                            <tag><name>file</name><placement>a</placement><head>Archivo:</head></tag>
+                            <tag><name>brief</name><placement>a</placement><head>Resumen:</head></tag>
+                        </tags>
+                        <doclint>none</doclint>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

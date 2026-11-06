@@ -1,0 +1,11 @@
+target/
+docs/doxygen/
+*.log
+.idea/
+.vscode/
+*.iml
+data/
+erl_crash.dump
+
+# Enunciado del parcial (material del curso)
+*.pdf

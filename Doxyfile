@@ -2,14 +2,14 @@
 # Generar la documentacion:  doxygen   (resultado en docs/html/index.html)
 
 PROJECT_NAME           = "Laboratorio de Ingeniería de Software II"
-PROJECT_BRIEF          = "API REST de productos (Spring Boot) y banco de preguntas (Microkernel + Pipes & Filters)"
+PROJECT_BRIEF          = "Banco de preguntas (Microkernel), API REST de productos y microservicios Saber PRO"
 OUTPUT_DIRECTORY       = docs
 OUTPUT_LANGUAGE        = Spanish
-INPUT                  = README.md productos-api banco-preguntas-microkernel
+INPUT                  = README.md productos-api banco-preguntas-microkernel saberpro-microservicios
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.java *.md
 RECURSIVE              = YES
-EXCLUDE_PATTERNS       = */target/* */.mvn/*
+EXCLUDE_PATTERNS       = */target/* */.mvn/* */data/*
 USE_MDFILE_AS_MAINPAGE = README.md
 FULL_PATH_NAMES        = YES
 STRIP_FROM_PATH        = .

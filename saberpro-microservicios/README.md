@@ -257,13 +257,14 @@ Consola: <http://localhost:15672> (guest / guest).
 
 ### 5.2 Compilar y probar
 ```bash
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+cd saberpro-microservicios
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk   # si java por defecto no es la 21
 mvn clean install
 ```
 
 ### 5.3 Arrancar los servicios (una terminal por servicio)
 
-> Ejecutar **desde la raíz del proyecto**: la base H2 se guarda en `./data/` relativo al directorio de trabajo.
+> Ejecutar **desde la carpeta `saberpro-microservicios`**: la base H2 se guarda en `./data/` relativo al directorio de trabajo.
 
 ```bash
 mvn -pl validation-service spring-boot:run
@@ -354,8 +355,9 @@ En <http://localhost:15672>:
 
 ## 8. Documentación del código
 
-Cada archivo comienza con una cabecera `@file` / `@brief` / `@author`, y cada clase y método público tiene su comentario `@brief`, `@param`, `@return` y `@throws`. Para generar el sitio HTML:
+Cada archivo comienza con una cabecera `@file` / `@brief` / `@author`, y cada clase y método público tiene su comentario `@brief`, `@param`, `@return` y `@throws`. El sitio HTML se genera con el `Doxyfile` de la raíz del repositorio, que incluye este proyecto:
 
 ```bash
-doxygen Doxyfile          # → docs/doxygen/html/index.html
+cd ..          # raíz del repositorio
+doxygen        # → docs/html/index.html
 ```

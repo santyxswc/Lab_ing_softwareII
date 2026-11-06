@@ -8,6 +8,7 @@ Talleres de arquitectura y diseño de software — Universidad del Cauca.
 |---|---|---|
 | 05 | [`banco-preguntas-microkernel`](banco-preguntas-microkernel/README.md) | Patrón **Microkernel (plugins)** combinado con **Tuberías y Filtros**, con interfaz Swing |
 | 06 | [`productos-api`](productos-api/README.md) | **API REST** con Spring Boot, Spring Data JPA y H2 (CRUD de productos) |
+| Parcial 2 | [`saberpro-microservicios`](saberpro-microservicios/README.md) | **Microservicios** con REST síncrono, **RabbitMQ**, patrones **Builder** y **State**, y JPA limpia |
 
 Cada carpeta tiene su propio README con la arquitectura, la estructura de paquetes y cómo probarla.
 
@@ -59,12 +60,35 @@ En ese caso todas las direcciones (interfaz web, consola H2 y Postman) usan `808
 En `http://localhost:8080` hay una interfaz web para probar el CRUD desde el navegador, y en
 `http://localhost:8080/h2-console` la consola de la base de datos.
 
+## Parcial 2 — Microservicios Saber PRO (REST + RabbitMQ)
+
+Tres microservicios Spring Boot para crear reactivos y enviarlos a revisión:
+
+| Servicio | Puerto | Responsabilidad |
+|---|---|---|
+| `validation-service` | 8082 | Valida que la justificación tenga más de 15 caracteres |
+| `question-service` | 8083 | Construye la pregunta con **Builder**, la valida por REST (RestTemplate), la guarda en H2 y publica el comando en RabbitMQ |
+| `lifecycle-service` | 8084 | Consume el comando con `@RabbitListener` y aplica la transición `DRAFT → PENDING_REVIEW` con el patrón **State** |
+
+El dominio es Java puro; la persistencia usa entidades `@Entity` separadas (`QuestionRecord`) y un mapeador bidireccional.
+Requiere RabbitMQ en `localhost:5672`.
+
+```bash
+cd saberpro-microservicios
+mvn clean install                               # 30 pruebas
+java -jar validation-service/target/validation-service-1.0.0.jar
+java -jar question-service/target/question-service-1.0.0.jar
+java -jar lifecycle-service/target/lifecycle-service-1.0.0.jar
+./scripts/seed.sh                               # preguntas de ejemplo
+```
+
 ---
 
 ## Requisitos
 
 - Java 21
 - Maven 3.9 o superior (la API incluye el wrapper `mvnw`)
+- RabbitMQ (solo para el Parcial 2)
 
 ## Integrantes
 

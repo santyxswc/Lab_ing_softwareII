@@ -1,0 +1,35 @@
+# @file application.yml
+# @brief Configuración de Lifecycle Service.
+# @author Santiago Caicedo
+server:
+  port: 8084
+
+spring:
+  application:
+    name: lifecycle-service
+
+  # Base de datos H2 propia en archivo: ./data/lifecycledb.mv.db
+  # (cada microservicio es dueño de sus datos). Ejecutar desde la raíz del proyecto.
+  # Consola: http://localhost:8084/h2-console
+  datasource:
+    url: jdbc:h2:file:./data/lifecycledb
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        # Un mensaje que falla no se reencola en bucle.
+        default-requeue-rejected: false

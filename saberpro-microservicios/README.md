@@ -1,7 +1,8 @@
 # Banco de Preguntas Saber PRO — Parcial 2 (Corte II)
 
 **Laboratorio de Ingeniería de Software II — Universidad del Cauca — 2026.2**
-**Autor:** Santiago Caicedo
+
+**Autor:** Santiago Caicedo · [Ver evidencias de ejecución](#9-evidencias-de-ejecución)
 
 Tres microservicios Spring Boot que cubren los tres puntos del parcial:
 
@@ -361,3 +362,82 @@ Cada archivo comienza con una cabecera `@file` / `@brief` / `@author`, y cada cl
 cd ..          # raíz del repositorio
 doxygen        # → docs/html/index.html
 ```
+
+---
+
+## 9. Evidencias de ejecución
+
+Capturas tomadas con los tres servicios y RabbitMQ 4.3.6 corriendo localmente. Están en [`docs/evidencias/`](docs/evidencias/).
+
+| Requisito del enunciado | Evidencia |
+|---|---|
+| **2.1** REST síncrono: 201 en DRAFT y 400 sin guardar · **2.2** 202 con `operationId` y transición a `PENDING_REVIEW` | [01 · Flujo completo en terminal](#01) |
+| Rúbrica: *evaluación práctica en Postman* | [02 · Resumen Postman/Newman](#02) · [03 · Las 13 peticiones](#03) |
+| Rúbrica: *consola de RabbitMQ* | [04 · Overview](#04) |
+| **2.2** El comando `SubmitQuestionForReview` en `saberpro.direct.exchange` con routing key `question.submit` | [05 · Mensaje en la cola](#05) |
+| **2.2** Exchange directa y bindings | [06 · Bindings](#06) · [07 · Colas](#07) |
+| **2.2** Lifecycle Service consume con `@RabbitListener` | [08 · Consumidor de la cola](#08) |
+| **3.2 / 3.3** `QuestionRecord` 1 → N `AnswerOptionRecord` persistidos en H2 | [09 · H2 de Question Service](#09) |
+| **1.2** Estado `DRAFT → PENDING_REVIEW` aplicado y reenvío rechazado | [10 · H2 de Lifecycle Service](#10) |
+| **1.1 / 1.2 / 3** Pruebas automáticas (Builder, State, mapeador, repositorio, controlador) | [14 · `mvn test`](#14) |
+| Entrega en el repositorio | [11 · Carpeta en GitHub](#11) · [12 · Commits](#12) · [13 · CI en verde](#13) |
+
+<a id="01"></a>
+### 01 · Flujo REST + AMQP en terminal
+201 Created en `DRAFT`, 400 por justificación de 9 caracteres, 202 Accepted con `operationId`, y la pregunta en `PENDING_REVIEW` con la operación `APPLIED`. Al final, el log del `@RabbitListener`.
+
+![Flujo en terminal](docs/evidencias/01-terminal-flujo-rest-y-amqp.png)
+
+<a id="02"></a>
+### 02 · Colección de Postman ejecutada con Newman: 13 aserciones, 0 fallos
+![Resumen Newman](docs/evidencias/02-postman-newman-resumen.png)
+
+<a id="03"></a>
+### 03 · Las 13 peticiones de la colección
+![Peticiones Newman](docs/evidencias/03-postman-newman-peticiones.png)
+
+<a id="04"></a>
+### 04 · Consola de RabbitMQ
+![RabbitMQ overview](docs/evidencias/04-rabbitmq-overview.png)
+
+<a id="05"></a>
+### 05 · Comando `SubmitQuestionForReview` esperando en `question.submit.review.queue`
+Con Lifecycle Service detenido para que el mensaje quede en la cola: exchange `saberpro.direct.exchange`, routing key `question.submit` y payload `{operationId, questionId, requestedAt}`. Al volver a arrancar Lifecycle Service, lo consumió y aplicó la transición.
+
+![Mensaje en la cola](docs/evidencias/05-rabbitmq-mensaje-SubmitQuestionForReview.png)
+
+<a id="06"></a>
+### 06 · Exchange `saberpro.direct.exchange` y sus bindings
+![Bindings](docs/evidencias/06-rabbitmq-exchange-bindings.png)
+
+<a id="07"></a>
+### 07 · Colas declaradas
+![Colas](docs/evidencias/07-rabbitmq-colas-y-consumidores.png)
+
+<a id="08"></a>
+### 08 · Lifecycle Service conectado como consumidor (`@RabbitListener`)
+![Consumidor](docs/evidencias/08-rabbitmq-cola-consumida-por-lifecycle.png)
+
+<a id="09"></a>
+### 09 · H2 de Question Service: `QUESTIONS` y `ANSWER_OPTIONS` (4 opciones, 1 correcta)
+![H2 Question](docs/evidencias/09-h2-question-service-tablas.png)
+
+<a id="10"></a>
+### 10 · H2 de Lifecycle Service: estado de cada pregunta y operaciones `APPLIED` / `REJECTED`
+![H2 Lifecycle](docs/evidencias/10-h2-lifecycle-service-tablas.png)
+
+<a id="11"></a>
+### 11 · Proyecto en GitHub
+![Carpeta en GitHub](docs/evidencias/11-github-carpeta-del-parcial.png)
+
+<a id="12"></a>
+### 12 · Historial de commits
+![Commits](docs/evidencias/12-github-historial-de-commits.png)
+
+<a id="13"></a>
+### 13 · CI en GitHub Actions
+![CI](docs/evidencias/13-github-actions-ci.png)
+
+<a id="14"></a>
+### 14 · Pruebas automáticas (30 en total)
+![mvn test](docs/evidencias/14-terminal-pruebas-automaticas.png)

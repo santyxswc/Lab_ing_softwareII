@@ -1,0 +1,9 @@
+# @file application.yml
+# @brief Configuración de Validation Service.
+# @author Santiago Caicedo
+server:
+  port: 8082
+
+spring:
+  application:
+    name: validation-service

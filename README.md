@@ -9,6 +9,7 @@ Talleres de arquitectura y diseño de software — Universidad del Cauca.
 | 05 | [`banco-preguntas-microkernel`](banco-preguntas-microkernel/README.md) | Patrón **Microkernel (plugins)** combinado con **Tuberías y Filtros**, con interfaz Swing |
 | 06 | [`productos-api`](productos-api/README.md) | **API REST** con Spring Boot, Spring Data JPA y H2 (CRUD de productos) |
 | Parcial 2 | [`saberpro-microservicios`](saberpro-microservicios/README.md) | **Microservicios** con REST síncrono, **RabbitMQ**, patrones **Builder** y **State**, y JPA limpia |
+| 12 | [`banco-preguntas-hexagonal`](banco-preguntas-hexagonal/README.md) | **Arquitectura Hexagonal (Puertos y Adaptadores)** y **DDD** con persistencia intercambiable (JPA / memoria) |
 
 Cada carpeta tiene su propio README con la arquitectura, la estructura de paquetes y cómo probarla.
 
@@ -82,12 +83,38 @@ java -jar lifecycle-service/target/lifecycle-service-1.0.0.jar
 ./scripts/seed.sh                               # preguntas de ejemplo
 ```
 
+## Taller 12 — Banco de preguntas (Arquitectura Hexagonal + DDD)
+
+Fase I del proyecto integrador: creación y evaluación de preguntas del Banco Saber PRO con **DDD táctico** y
+**Arquitectura Hexagonal (Puertos y Adaptadores)**. El paquete `domain` es Java puro (sin Spring, JPA ni HTTP), y la
+persistencia se cambia entre JPA y memoria con una sola propiedad, sin tocar el dominio.
+
+- **Objetos de Valor:** `Enunciado` (no vacío), `Justificacion` (mínimo 15 caracteres) y `OpcionRespuesta`.
+- **Agregado:** `Pregunta` nace en `BORRADOR` y pasa a `PENDIENTE_REVISION` solo con exactamente 4 opciones y 1 clave correcta.
+- **Puertos:** de entrada `CrearPreguntaUseCase` y `ConsultarPreguntaUseCase`; de salida `PreguntaRepositoryPort`.
+- **Adaptadores:** REST (`PreguntaRestController`) y persistencia intercambiable: `JpaQuestionAdapter` (H2) e
+  `InMemoryQuestionAdapter` (`ConcurrentHashMap`), elegidos con `saberpro.repository.adapter=jpa|memory`.
+
+| Verbo | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/preguntas` | Crea la pregunta y la envía a revisión (201 / 400) |
+| GET | `/api/preguntas` | Lista las preguntas |
+| GET | `/api/preguntas/{id}` | Consulta una pregunta (404 si no existe) |
+
+```bash
+cd banco-preguntas-hexagonal
+./mvnw clean test          # 46 pruebas: dominio, aplicación, adaptadores e intercambiabilidad
+./mvnw spring-boot:run     # API en http://localhost:8085/api/preguntas
+```
+
+El informe técnico está en [`banco-preguntas-hexagonal/docs/INFORME_TECNICO.md`](banco-preguntas-hexagonal/docs/INFORME_TECNICO.md).
+
 ---
 
 ## Requisitos
 
 - Java 21
-- Maven 3.9 o superior (la API incluye el wrapper `mvnw`)
+- Maven 3.9 o superior (`productos-api` y `banco-preguntas-hexagonal` incluyen el wrapper `mvnw`)
 - RabbitMQ (solo para el Parcial 2)
 
 ## Integrantes

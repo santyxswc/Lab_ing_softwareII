@@ -2,10 +2,10 @@
 # Generar la documentacion:  doxygen   (resultado en docs/html/index.html)
 
 PROJECT_NAME           = "Laboratorio de Ingeniería de Software II"
-PROJECT_BRIEF          = "Banco de preguntas (Microkernel), API REST de productos y microservicios Saber PRO"
+PROJECT_BRIEF          = "Banco de preguntas (Microkernel y Hexagonal + DDD), API REST de productos y microservicios Saber PRO"
 OUTPUT_DIRECTORY       = docs
 OUTPUT_LANGUAGE        = Spanish
-INPUT                  = README.md productos-api banco-preguntas-microkernel saberpro-microservicios
+INPUT                  = README.md productos-api banco-preguntas-microkernel saberpro-microservicios banco-preguntas-hexagonal
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.java *.md
 RECURSIVE              = YES

@@ -50,3 +50,18 @@ jobs:
           java-version: 21
           cache: maven
       - run: mvn -B verify
+
+  banco-preguntas-hexagonal:
+    name: Taller 12 · Banco de preguntas (DDD + Arquitectura Hexagonal)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: banco-preguntas-hexagonal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - run: mvn -B verify

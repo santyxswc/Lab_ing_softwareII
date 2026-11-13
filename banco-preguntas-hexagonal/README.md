@@ -2,7 +2,7 @@
 
 **Laboratorio de Ingeniería de Software II — Universidad del Cauca — 2026.2**
 
-**Docente:** Ing. Paola Andrea Bedoya Toro · **Autores:** Santiago Caicedo, Adrian Araujo, Ivan Alexander López · [Ver informe técnico](docs/INFORME_TECNICO.md)
+**Docente:** Ing. Paola Andrea Bedoya Toro · **Autores:** Santiago Caicedo, Adrian Araujo, Ivan Alexander López · [Informe técnico (Word)](docs/Formato-Documento.docx) · [Ver evidencias de ejecución](#10-evidencias-de-ejecución)
 
 Núcleo de creación y evaluación de reactivos del Banco Saber PRO modelado con **DDD táctico** y aislado del
 mundo exterior con **Arquitectura Hexagonal (Puertos y Adaptadores)**. La persistencia se puede cambiar entre
@@ -14,7 +14,7 @@ JPA (H2) y memoria (`ConcurrentHashMap`) sin tocar una sola línea del dominio n
 | **2** Puertos | Casos de uso (entrada) y persistencia (salida) | `domain/ports/inbound/`, `domain/ports/outbound/` |
 | **3** Adaptadores | REST (driving) y persistencia JPA / memoria (driven) | `infrastructure/adapters/` |
 | **4** Intercambiabilidad | Cambiar `JpaQuestionAdapter` por `InMemoryQuestionAdapter` | `infrastructure/config/RepositoryAdapterConfig.java`, `application.yml` |
-| **5** Informe y pruebas | Informe técnico y suite automática | [`docs/INFORME_TECNICO.md`](docs/INFORME_TECNICO.md), `src/test/` (46 pruebas) |
+| **5** Informe y pruebas | Informe técnico y suite automática | [`docs/Formato-Documento.docx`](docs/Formato-Documento.docx), [`docs/INFORME_TECNICO.md`](docs/INFORME_TECNICO.md), `src/test/` (46 pruebas) |
 
 ---
 
@@ -224,7 +224,13 @@ Consola H2: `http://localhost:8085/h2-console` (JDBC URL `jdbc:h2:mem:saberpro_h
 
 Si el puerto 8085 está ocupado: `SERVER_PORT=8086 ./mvnw spring-boot:run`.
 
-### 6.3 Ejemplo con curl
+### 6.3 Recorrido completo de la API
+
+```bash
+./scripts/demo.sh         # 8 peticiones: 201, 400 por reglas de negocio, 200 y 404 (requiere jq)
+```
+
+### 6.4 Ejemplo con curl
 
 ```bash
 curl -X POST http://localhost:8085/api/preguntas \
@@ -309,5 +315,63 @@ cd ..          # raíz del repositorio
 doxygen        # → docs/html/index.html
 ```
 
-El informe técnico del taller está en [`docs/INFORME_TECNICO.md`](docs/INFORME_TECNICO.md) y su versión en Word en
-[`docs/Formato-Documento.docx`](docs/Formato-Documento.docx).
+El informe técnico entregable está en [`docs/Formato-Documento.docx`](docs/Formato-Documento.docx), con el encabezado y
+el pie del formato oficial de la guía. [`docs/INFORME_TECNICO.md`](docs/INFORME_TECNICO.md) es una versión resumida en Markdown (sin las capturas).
+
+---
+
+## 10. Evidencias de ejecución
+
+Capturas tomadas el 13 de noviembre de 2026 ejecutando el `.jar` empaquetado y `scripts/demo.sh`. Están en
+[`docs/evidencias/`](docs/evidencias/).
+
+| Requisito de la guía | Evidencia |
+|---|---|
+| **Paso 1:** creación de preguntas vía REST con `JpaQuestionAdapter` | [01 · Flujo REST con JPA](#01) · [02 · Datos en H2](#02) |
+| **Paso 2:** activar `InMemoryQuestionAdapter` cambiando la inyección | [03 · Misma API en memoria](#03) · [04 · H2 vacía](#04) |
+| **Paso 3:** pruebas unitarias e integración sin tocar `domain` | [05 · `mvnw test`](#05) · [06 · Dominio puro](#06) |
+| Repositorio con `domain`, `application` e `infrastructure` | [07 · Paquetes en GitHub](#07) · [08 · Commits](#08) · [09 · CI en verde](#09) |
+
+<a id="01"></a>
+### 01 · Paso 1: flujo REST con `JpaQuestionAdapter`
+2 preguntas creadas (201, `PENDIENTE_REVISION`), 3 rechazos con 400 (justificación corta, dos claves correctas, 3 opciones), consulta 200 / 404 y listado.
+
+![Flujo REST con JPA](docs/evidencias/01-terminal-flujo-rest-jpa.png)
+
+<a id="02"></a>
+### 02 · Paso 1: tablas `preguntas` y `opciones` en H2
+2 preguntas con 4 opciones cada una y una sola clave correcta; las peticiones rechazadas no dejaron filas.
+
+![H2 con datos JPA](docs/evidencias/02-h2-datos-jpa.png)
+
+<a id="03"></a>
+### 03 · Paso 2: la misma API con `InMemoryQuestionAdapter`
+Arrancada con `--saberpro.repository.adapter=memory`: las 8 respuestas son idénticas a las del Paso 1.
+
+![Flujo REST en memoria](docs/evidencias/03-terminal-flujo-rest-memoria.png)
+
+<a id="04"></a>
+### 04 · Paso 2: H2 queda vacía con el adaptador en memoria
+Las tablas existen pero tienen 0 filas: los datos están en el `ConcurrentHashMap`.
+
+![H2 vacía con memoria](docs/evidencias/04-h2-vacia-con-memoria.png)
+
+<a id="05"></a>
+### 05 · Paso 3: pruebas automáticas (46, 0 fallos)
+![Pruebas automáticas](docs/evidencias/05-terminal-pruebas-automaticas.png)
+
+<a id="06"></a>
+### 06 · El dominio no importa Spring, JPA ni Hibernate, y no cambió en la prueba
+![Dominio puro](docs/evidencias/06-terminal-dominio-puro.png)
+
+<a id="07"></a>
+### 07 · Paquetes hexagonales en GitHub
+![Paquetes en GitHub](docs/evidencias/07-github-paquetes-hexagonales.png)
+
+<a id="08"></a>
+### 08 · Historial de commits
+![Commits](docs/evidencias/08-github-historial-de-commits.png)
+
+<a id="09"></a>
+### 09 · CI en GitHub Actions
+![CI](docs/evidencias/09-github-actions-ci.png)

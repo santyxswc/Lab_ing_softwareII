@@ -77,7 +77,7 @@ Requiere RabbitMQ en `localhost:5672`.
 
 ```bash
 cd saberpro-microservicios
-mvn clean install                               # 30 pruebas
+mvn clean install                               # 36 pruebas
 java -jar validation-service/target/validation-service-1.0.0.jar
 java -jar question-service/target/question-service-1.0.0.jar
 java -jar lifecycle-service/target/lifecycle-service-1.0.0.jar
@@ -125,11 +125,16 @@ bridge `saberpro-net`.
 - **Orquestación:** `rabbitmq` (5672/15672) + `validation-service` (8082) + `question-service` (8083) +
   `lifecycle-service` (8084), comunicados por REST síncrono y AMQP asíncrono.
 
+- **Contenerización:** un `Dockerfile` en la raíz de cada microservicio (compila el `.jar` con Maven y lo ejecuta
+  sobre Java 17) y el [`docker-compose.yml`](docker-compose.yml) de la raíz del repositorio como orquestador único.
+
 ```bash
-cd saberpro-microservicios
-mvn clean package -DskipTests     # genera los .jar
-docker compose up --build -d      # levanta los 4 contenedores en la red saberpro-net
+docker compose up -d --build      # desde la raíz: compila y levanta los 4 contenedores en la red saberpro-net
+docker compose ps
+docker compose down
 ```
+
+No hace falta tener Java ni Maven instalados: la compilación ocurre dentro de Docker.
 
 El informe técnico (con el modelo C4 en Mermaid y las evidencias) está en
 [`saberpro-microservicios/docs/INFORME_TECNICO.md`](saberpro-microservicios/docs/INFORME_TECNICO.md).
@@ -138,9 +143,9 @@ El informe técnico (con el modelo C4 en Mermaid y las evidencias) está en
 
 ## Requisitos
 
-- Java 21
+- Java 21 (los microservicios Saber PRO se compilan para Java 17, que es el que corre en sus contenedores)
 - Maven 3.9 o superior (`productos-api` y `banco-preguntas-hexagonal` incluyen el wrapper `mvnw`)
-- RabbitMQ (solo para el Parcial 2)
+- Docker con Docker Compose (Taller 13); RabbitMQ solo si el Parcial 2 se corre sin contenedores
 
 ## Integrantes
 

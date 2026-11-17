@@ -13,9 +13,9 @@ Tres microservicios Spring Boot **contenerizados con Docker** y **orquestados co
 | **2.1** REST síncrono | `ValidationServiceRestClient` (RestTemplate) → `POST /validate` | `question-service/.../infrastructure/client/` |
 | **2.2** AMQP asíncrono | `RabbitMQPublisher` → `QuestionStatusChangedListener` (`@RabbitListener`) | `question-service/.../infrastructure/messaging/`, `lifecycle-service/.../messaging/` |
 | **3.1** Dominio puro | `Question` (agregado, sin `@Entity`/`@Table`/`@Id`) + VO `Enunciado`, `Justificacion` | `question-service/.../domain/model/` |
-| **3.2** `@Entity` + `@OneToMany(cascade = ALL)` | `QuestionRecord` → `AnswerOptionRecord` | `question-service/.../infrastructure/jpa/record/` |
+| **3.2** `@Entity` + `@OneToMany(cascade = ALL)` | `QuestionRecord` → `AnswerOptionRecord` | `question-service/.../infrastructure/jpa/` |
 | **3.3** Mapper + repositorio H2 | `QuestionDomainMapper`, `JpaQuestionAdapter`, `SpringQuestionDataRepository` | `question-service/.../infrastructure/jpa/` |
-| **Taller 13** Hexagonal | Puertos `domain/ports/{inbound,outbound}` + adaptadores intercambiables (`JpaQuestionAdapter` / `InMemoryQuestionAdapter`) | `question-service/.../domain/ports/`, `.../infrastructure/persistence/memory/` |
+| **Taller 13** Hexagonal | Puertos `domain/ports/{inbound,outbound}` + adaptadores intercambiables (`JpaQuestionAdapter` / `InMemoryQuestionAdapter`) | `question-service/.../domain/ports/`, `.../infrastructure/memory/` |
 
 ---
 
@@ -70,30 +70,33 @@ co.edu.unicauca.saberpro.question
 │       └── outbound                PreguntaRepositoryPort, NotificacionPort
 │                                   (puertos de salida / driven)
 ├── application                     ← casos de uso, Java puro
-│   ├── QuestionService             implementa CrearPreguntaUseCase y EvaluarPreguntaUseCase
+│   ├── QuestionApplicationService  implementa CrearPreguntaUseCase y EvaluarPreguntaUseCase
 │   ├── dto                         SubmitQuestionForReview
 │   ├── port                        JustificationValidator (hacia Validation Service, Punto 2.1)
 │   └── exception                   ValidationRejectedException, ValidationServiceUnavailableException
-└── infrastructure                  ← adaptadores (Spring)
-    ├── rest                        QuestionRestController, RestExceptionHandler, dto/  (entrada)
-    ├── client                      ValidationServiceRestClient (RestTemplate)          (Punto 2.1)
-    ├── messaging                   RabbitMQPublisher, QuestionStatusChangedListener   (Punto 2.2)
-    ├── jpa
-    │   ├── record                  QuestionRecord, AnswerOptionRecord (@Entity)        (Punto 3.2)
-    │   ├── mapper                  QuestionDomainMapper                                (Punto 3.3)
-    │   └── repository              SpringQuestionDataRepository, JpaQuestionAdapter    (Punto 3.3)
-    ├── persistence
-    │   └── memory                  InMemoryQuestionAdapter (ConcurrentHashMap)
-    └── config                      ApplicationConfig, RepositoryAdapterConfig,
-                                    RabbitConfig, RestClientConfig, MessagingTopology
+├── infrastructure                  ← adaptadores de salida (Spring)
+│   ├── jpa                         QuestionRecord, AnswerOptionRecord (@Entity)        (Punto 3.2)
+│   │                               QuestionDomainMapper, JpaQuestionAdapter,
+│   │                               SpringQuestionDataRepository                        (Punto 3.3)
+│   ├── memory                      InMemoryQuestionAdapter (prueba de intercambiabilidad)
+│   ├── messaging                   RabbitMQPublisher, QuestionStatusChangedListener   (Punto 2.2)
+│   ├── client                      ValidationServiceRestClient (RestTemplate)          (Punto 2.1)
+│   └── config                      ApplicationConfig, RepositoryAdapterConfig,
+│                                   RabbitConfig, RestClientConfig, MessagingTopology
+└── api                             ← adaptador de entrada REST
+                                    QuestionRestController, RestExceptionHandler, dto/
 ```
+
+Es el encarpetado oficial de la guía del Taller 13. Los otros dos servicios siguen la misma idea:
+`validation-service` expone `api/ValidationRestController` y `lifecycle-service` consume la cola en
+`messaging/QuestionReviewListener`.
 
 #### Puertos (Arquitectura Hexagonal)
 
 | Dirección | Puerto | Quién lo implementa / lo usa |
 |---|---|---|
-| Entrada (inbound / driving) | `CrearPreguntaUseCase` | Lo invoca `QuestionRestController`; lo implementa `QuestionService` |
-| Entrada (inbound / driving) | `EvaluarPreguntaUseCase` | Lo invoca `QuestionRestController`; lo implementa `QuestionService` |
+| Entrada (inbound / driving) | `CrearPreguntaUseCase` | Lo invoca `QuestionRestController`; lo implementa `QuestionApplicationService` |
+| Entrada (inbound / driving) | `EvaluarPreguntaUseCase` | Lo invoca `QuestionRestController`; lo implementa `QuestionApplicationService` |
 | Salida (outbound / driven) | `PreguntaRepositoryPort` | `JpaQuestionAdapter` (JPA + H2) **o** `InMemoryQuestionAdapter` |
 | Salida (outbound / driven) | `NotificacionPort` | `RabbitMQPublisher` (RabbitMQ) |
 | Salida (outbound / driven) | `JustificationValidator` | `ValidationServiceRestClient` (RestTemplate) |
@@ -102,7 +105,7 @@ Los adaptadores de salida de persistencia son **intercambiables sin tocar el dom
 
 Lifecycle Service sigue la misma organización (`domain/state` contiene el patrón State).
 
-Las dependencias apuntan hacia adentro: `infrastructure → application → domain`. `QuestionService` y `LifecycleService` no tienen anotaciones de Spring; se registran como beans en `ApplicationConfig`.
+Las dependencias apuntan hacia adentro: `api` / `infrastructure → application → domain`. `QuestionApplicationService` y `LifecycleService` no tienen anotaciones de Spring; se registran como beans en `ApplicationConfig`.
 
 ---
 
@@ -262,39 +265,41 @@ classDiagram
 ## 5. Cómo ejecutarlo
 
 ### Requisitos
-- **Java 21** (en este equipo: `/usr/lib/jvm/java-21-openjdk`)
-- **Maven 3.9+**
-- **Docker + Docker Compose** (para la ejecución contenerizada del Taller 13) o **RabbitMQ** en `localhost:5672` (guest/guest) si se corre localmente.
+- **Docker + Docker Compose**: es lo único necesario para la ejecución contenerizada del Taller 13.
+- Para compilar y probar fuera de Docker: **JDK 17 o superior** (el código se compila para Java 17) y **Maven 3.9+**, más **RabbitMQ** en `localhost:5672` (guest/guest).
 
 ### 5.1 Todo con Docker Compose (Taller 13)
 
-Cada microservicio trae su propio `Dockerfile` (base `eclipse-temurin:21-jdk-alpine`, copia `target/*.jar` y arranca con `ENTRYPOINT ["java","-jar","app.jar"]`). El `docker-compose.yml` de la raíz construye las 3 imágenes y levanta los 4 contenedores sobre la red **bridge `saberpro-net`**:
+Cada microservicio trae su propio `Dockerfile` en dos etapas: la primera compila el `.jar` ejecutable con Maven y la segunda lo corre sobre **Java 17** con `ENTRYPOINT ["java","-jar","app.jar"]`. La guía pide la base `openjdk:17-jdk-slim`, pero Docker Hub retiró esa etiqueta; se usa su reemplazo oficial `eclipse-temurin:17-jre-jammy` (se puede cambiar con `--build-arg RUNTIME_IMAGE=...`). El `docker-compose.yml` construye las 3 imágenes y levanta los 4 contenedores sobre la red **bridge `saberpro-net`**:
 
 | Servicio Compose | Contenedor | Imagen / build | Puerto(s) |
 |---|---|---|---|
 | `rabbitmq` | `saberpro-rabbitmq` | `rabbitmq:3-management` | 5672 (AMQP), 15672 (consola) |
-| `validation-service` | `saberpro-validation-service` | `build: ./validation-service` | 8082 |
-| `question-service` | `saberpro-question-service` | `build: ./question-service` | 8083 |
-| `lifecycle-service` | `saberpro-lifecycle-service` | `build: ./lifecycle-service` | 8084 |
+| `validation-service` | `saberpro-validation-service` | `validation-service/Dockerfile` | 8082 |
+| `question-service` | `saberpro-question-service` | `question-service/Dockerfile` | 8083 |
+| `lifecycle-service` | `saberpro-lifecycle-service` | `lifecycle-service/Dockerfile` | 8084 |
 
 ```bash
-cd saberpro-microservicios
+# 1) Compilar los .jar, construir las imágenes y levantar todo en segundo plano.
+#    Funciona desde la raíz del repositorio o desde saberpro-microservicios/.
+docker compose up -d --build
 
-# 1) Generar los .jar en cada target/ (los Dockerfiles los copian)
-mvn clean package -DskipTests
-
-# 2) Construir las imágenes y levantar todo en segundo plano
-docker compose up --build -d
-
-# 3) Ver el estado y los logs
+# 2) Ver el estado y los logs
 docker compose ps
 docker compose logs -f question-service
 
-# 4) Detener y eliminar los contenedores (las imágenes y volúmenes se conservan)
+# 3) Detener y eliminar los contenedores (las imágenes y los volúmenes se conservan)
 docker compose down
 ```
 
-Dentro de la red, `question-service` recibe por variables de entorno `SPRING_RABBITMQ_HOST=rabbitmq` y `SERVICES_VALIDATION_URL=http://validation-service:8082`: los contenedores se resuelven por **nombre de servicio** (DNS interno de Docker), no por `localhost`. El `depends_on` garantiza que `question-service` arranque después de `rabbitmq` y `validation-service`, y `lifecycle-service` después de `rabbitmq`.
+Para levantar el `question-service` con el adaptador en memoria en lugar de JPA (prueba de intercambiabilidad
+sobre contenedores):
+
+```bash
+SABERPRO_REPOSITORY_ADAPTER=memory docker compose up -d --build
+```
+
+Dentro de la red, `question-service` recibe por variables de entorno `SPRING_RABBITMQ_HOST=rabbitmq` y `SERVICES_VALIDATION_URL=http://validation-service:8082`: los contenedores se resuelven por **nombre de servicio** (DNS interno de Docker), no por `localhost`. El `depends_on` hace que `question-service` y `lifecycle-service` esperen a que `rabbitmq` pase su *healthcheck* antes de arrancar. Las bases H2 quedan en volúmenes (`question-data`, `lifecycle-data`), así que los datos sobreviven a un `docker compose down`.
 
 Consola de RabbitMQ: <http://localhost:15672> (guest / guest).
 
@@ -314,7 +319,7 @@ sudo systemctl start rabbitmq
 ### 5.3 Compilar y probar
 ```bash
 cd saberpro-microservicios
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk   # si java por defecto no es la 21
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk   # cualquier JDK 17 o superior
 mvn clean install
 ```
 
@@ -381,15 +386,16 @@ En <http://localhost:15672>:
 - **Queues** → `question.submit.review.queue` con consumidor (Lifecycle Service) y gráfica de mensajes al hacer el submit.
 - Para ver un mensaje en la cola: detener Lifecycle Service, hacer el submit y usar *Get messages* en la cola.
 
-### 6.4 Pruebas automáticas (30)
+### 6.4 Pruebas automáticas (36)
 
 | Clase | Qué verifica |
 |---|---|
 | `JustificationRuleTest` | Límite `> 15`: 15 falla, 16 pasa; espacios y `null`. |
 | `QuestionBuilderTest` | 4 opciones exactas, respuesta correcta existente, letras únicas, todos los errores juntos. |
-| `QuestionServiceTest` | Guarda solo si la validación pasa; submit publica el comando; 404 no publica. |
-| `QuestionControllerTest` | Códigos HTTP 201 / 400 / 202 / 404. |
-| `QuestionRepositoryJpaImplTest` → `JpaQuestionAdapterTest` | Cascada en H2, actualización sin duplicar opciones, mapeador ida y vuelta. |
+| `QuestionApplicationServiceTest` | Guarda solo si la validación pasa; submit publica el comando; 404 no publica. |
+| `QuestionRestControllerTest` | Códigos HTTP 201 / 400 / 202 / 404. |
+| `JpaQuestionAdapterTest` | Contrato del puerto sobre H2 (cascada, actualización sin duplicar opciones) y mapeador ida y vuelta. |
+| `InMemoryQuestionAdapterTest` | El **mismo contrato** (`PreguntaRepositoryPortContract`) sobre el adaptador en memoria: prueba de intercambiabilidad. |
 | `QuestionStateTest` | Draft → PendingReview; segundo envío rechazado; reconstrucción del estado. |
 | `LifecycleServiceTest` | APPLIED, REJECTED e idempotencia por `operationId`. |
 

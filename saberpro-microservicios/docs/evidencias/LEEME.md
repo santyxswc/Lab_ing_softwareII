@@ -15,9 +15,7 @@ Deben conservar **exactamente** estos nombres (el informe [`../INFORME_TECNICO.m
 ## Cómo obtener las capturas
 
 ```bash
-cd saberpro-microservicios
-mvn clean package -DskipTests
-docker compose up --build -d
+docker compose up -d --build            # desde la raíz del repositorio
 docker compose ps                       # → 01-docker-ps.png
 # ejecutar las llamadas REST (Postman/curl) → 02-pruebas-rest.png
 # abrir http://localhost:15672            → 03-rabbitmq-queues.png

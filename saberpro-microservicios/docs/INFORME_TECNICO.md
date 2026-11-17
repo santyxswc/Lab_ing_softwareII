@@ -31,14 +31,14 @@ El objetivo de esta fase fue **unificar ambos enfoques**: dotar al `question-ser
 
 Antes de esta fase, `question-service` organizaba el código en capas técnicas (`controller → service → repository`). La refactorización lo reorganizó en torno al **modelo de dominio**:
 
-- **Objetos de Valor inmutables (`record` de Java 21)** que custodian sus propias invariantes en el constructor compacto:
+- **Objetos de Valor inmutables (`record` de Java 17)** que custodian sus propias invariantes en el constructor compacto:
   - **`Enunciado`** (`domain.model.Enunciado`): no puede ser nulo ni vacío; aplica `trim()`. Si se viola, lanza `ReglaNegocioException("El enunciado no puede ser nulo ni vacío.")`.
   - **`Justificacion`** (`domain.model.Justificacion`): exige un mínimo de **15 caracteres** de sustentación técnica (`valor.trim().length() < LONGITUD_MINIMA`); si no se cumple lanza `ReglaNegocioException`.
 - **Raíz del Agregado (Aggregate Root) `Question`**: encapsula `id`, `Enunciado`, `Justificacion`, `List<AnswerOption>` (lista inmutable vía `List.copyOf`) y `QuestionStatus`. Nace en `DRAFT` con `Question.newDraft(...)` (usado por el **Builder**) y se reconstruye con `Question.restore(...)` (usado por el mapeador). No tiene `@Entity`, `@Table` ni `@Id`.
 - **`AnswerOption`**: opción A/B/C/D, objeto de dominio puro sin anotaciones de persistencia.
 - **Excepciones de dominio**: `DomainException` (base), `ReglaNegocioException`, `InvalidQuestionException` y `QuestionNotFoundException`. El dominio señala inconsistencias semánticas sin acoplarse a HTTP.
 
-> **Regla de dependencia respetada:** `infrastructure → application → domain`. Nada de Spring, JPA o AMQP se filtra hacia `domain`.
+> **Regla de dependencia respetada:** `api` / `infrastructure → application → domain`. Nada de Spring, JPA o AMQP se filtra hacia `domain`.
 
 ### 1.2 Puertos de Entrada y Salida (Arquitectura Hexagonal)
 
@@ -70,7 +70,7 @@ public interface NotificacionPort {
 }
 ```
 
-**Servicio de Aplicación (`QuestionService`)**: orquestador Java puro que **implementa los dos puertos de entrada** y depende **solo de puertos de salida** (`PreguntaRepositoryPort`, `NotificacionPort`) más el puerto `JustificationValidator` (hacia Validation Service). Spring lo registra como bean en `ApplicationConfig`; no lleva anotaciones propias.
+**Servicio de Aplicación (`QuestionApplicationService`)**: orquestador Java puro que **implementa los dos puertos de entrada** y depende **solo de puertos de salida** (`PreguntaRepositoryPort`, `NotificacionPort`) más el puerto `JustificationValidator` (hacia Validation Service). Spring lo registra como bean en `ApplicationConfig`; no lleva anotaciones propias.
 
 ### 1.3 Unificación con el ecosistema de microservicios
 
@@ -120,19 +120,48 @@ public class RepositoryAdapterConfig {
 
 Los tres microservicios y el broker se empaquetaron en contenedores y se orquestan sobre una red **bridge** común:
 
-- **`Dockerfile` por microservicio** (uno en cada raíz: `validation-service/`, `question-service/`, `lifecycle-service/`), con imagen base `eclipse-temurin:21-jdk-alpine`, copia del `.jar` (`COPY target/*.jar app.jar`) y `ENTRYPOINT ["java", "-jar", "app.jar"]`.
-- **`docker-compose.yml`** en la raíz de `saberpro-microservicios` define los 4 servicios sobre la red `saberpro-net`, con `depends_on` y variables de entorno para el descubrimiento por nombre de servicio.
+- **`Dockerfile` por microservicio** (uno en cada raíz: `validation-service/`, `question-service/`, `lifecycle-service/`), en dos etapas: la primera compila el `.jar` ejecutable con Maven y la segunda lo corre sobre Java 17 con `ENTRYPOINT ["java", "-jar", "app.jar"]`. La guía indica la base `openjdk:17-jdk-slim`; como Docker Hub retiró esa etiqueta, se usa su reemplazo oficial `eclipse-temurin:17-jre-jammy` (parametrizable con `RUNTIME_IMAGE`).
+- **`docker-compose.yml`** en la raíz del repositorio (incluye el de `saberpro-microservicios/`, donde se definen los 4 servicios) sobre la red `saberpro-net`, con *healthcheck* del broker, `depends_on`, volúmenes para las bases H2 y variables de entorno para el descubrimiento por nombre de servicio.
+- **Un solo comando**: `docker compose up -d --build` compila y ejecuta todo el ecosistema, sin Java ni Maven en la máquina.
+- **Puertos públicos**: `8082`, `8083`, `8084`, `5672` y `15672`, para las pruebas con Postman o Thunder Client.
 
 ```bash
-cd saberpro-microservicios
-mvn clean package -DskipTests      # genera los .jar en cada target/
-docker compose up --build -d       # construye imágenes y levanta los 4 contenedores
+docker compose up -d --build       # compila los .jar, construye imágenes y levanta los 4 contenedores
 docker compose ps                  # estado de los contenedores
 docker compose logs -f question-service
 docker compose down                # detiene y elimina los contenedores
 ```
 
 ---
+
+### 1.6 Encarpetado oficial del proyecto
+
+El código sigue la estructura de paquetes de la guía del taller:
+
+| Microservicio | Paquete | Contenido |
+|---|---|---|
+| `validation-service` (:8082) | `validation.api` | `ValidationRestController` |
+| `question-service` (:8083) | `question.domain.model` | `Question`, `AnswerOption`, `Enunciado`, `Justificacion` (Java puro) |
+| | `question.domain.exception` | `ReglaNegocioException` |
+| | `question.domain.ports.inbound` | `CrearPreguntaUseCase`, `EvaluarPreguntaUseCase` |
+| | `question.domain.ports.outbound` | `PreguntaRepositoryPort`, `NotificacionPort` |
+| | `question.application` | `QuestionApplicationService` |
+| | `question.infrastructure.jpa` | `QuestionRecord`, `QuestionDomainMapper`, `JpaQuestionAdapter` |
+| | `question.infrastructure.memory` | `InMemoryQuestionAdapter` |
+| | `question.infrastructure.messaging` | `RabbitMQPublisher` |
+| | `question.api` | `QuestionRestController` |
+| `lifecycle-service` (:8084) | `lifecycle.messaging` | `QuestionReviewListener` |
+
+La intercambiabilidad se comprueba con una prueba de contrato (`PreguntaRepositoryPortContract`): las mismas
+aserciones se ejecutan contra `InMemoryQuestionAdapter` y contra `JpaQuestionAdapter` sin cambiar una línea.
+
+### 1.7 Matriz de trazabilidad del proyecto semestral
+
+| Corte | Enfoque arquitectónico | Hitos técnicos | Dónde está en el repositorio | Ponderación |
+|---|---|---|---|---|
+| Corte I | Monolito limpio y SOLID | Refactorización SOLID, capas MVC, pipeline de validación HU03 (Pipes & Filters) y soporte de plugins (Microkernel) | `banco-preguntas-microkernel/`, `productos-api/` | 25% |
+| Corte II | Microservicios y GoF | Bounded Contexts autónomos, REST síncrono, eventos AMQP con RabbitMQ, patrones Builder, State y Adapter, JPA | `saberpro-microservicios/` (Parcial 2) | 35% |
+| Corte III | DDD, Hexagonal y Docker | Dominio puro en Java, puertos y adaptadores, intercambiabilidad InMemory vs JPA, `Dockerfile` y Docker Compose | `banco-preguntas-hexagonal/` (Taller 12) y `saberpro-microservicios/` + `docker-compose.yml` (Taller 13) | 40% |
 
 ## 2. Modelo C4 Completo (Mermaid)
 
@@ -154,9 +183,9 @@ C4Container
     Person(docente, "Docente / Evaluador", "Usuario final de la API.")
 
     Container_Boundary(net, "Red Docker: saberpro-net (bridge)") {
-        Container(q, "question-service", "Spring Boot 3 / Java 21", "Adaptador REST, DDD y puertos hexagonales. Expone el puerto 8083.")
-        Container(v, "validation-service", "Spring Boot 3 / Java 21", "Valida la justificacion (min. 15 caracteres). Expone el puerto 8082.")
-        Container(l, "lifecycle-service", "Spring Boot 3 / Java 21", "Consume el comando y aplica State (DRAFT a PENDING_REVIEW). Expone el puerto 8084.")
+        Container(q, "question-service", "Spring Boot 3 / Java 17", "Adaptador REST, DDD y puertos hexagonales. Expone el puerto 8083.")
+        Container(v, "validation-service", "Spring Boot 3 / Java 17", "Valida la justificacion (min. 15 caracteres). Expone el puerto 8082.")
+        Container(l, "lifecycle-service", "Spring Boot 3 / Java 17", "Consume el comando y aplica State (DRAFT a PENDING_REVIEW). Expone el puerto 8084.")
         ContainerQueue(rmq, "rabbitmq", "RabbitMQ 3 management", "Exchange saberpro.direct.exchange y colas. Puertos 5672 y 15672.")
         ContainerDb(qdb, "H2 questiondb", "H2 en archivo", "Tablas de preguntas y opciones de question-service.")
         ContainerDb(ldb, "H2 lifecycledb", "H2 en archivo", "Tablas de ciclos de vida y operaciones de lifecycle-service.")
@@ -184,7 +213,7 @@ C4Component
 
     Container_Boundary(q, "question-service") {
         Component(rest, "QuestionRestController", "Adaptador REST (entrada)", "Expone /questions y traduce JSON a CrearPreguntaCommand.")
-        Component(svc, "QuestionService", "Aplicacion", "Implementa CrearPreguntaUseCase y EvaluarPreguntaUseCase; orquesta el flujo.")
+        Component(svc, "QuestionApplicationService", "Aplicacion", "Implementa CrearPreguntaUseCase y EvaluarPreguntaUseCase; orquesta el flujo.")
         Component(dom, "Dominio (Question y VOs)", "Java puro", "Builder, invariantes, AnswerOption, Enunciado, Justificacion, ReglaNegocioException.")
         Component(jpa, "JpaQuestionAdapter", "Adaptador JPA (salida)", "Implementa PreguntaRepositoryPort sobre Spring Data JPA y H2.")
         Component(mem, "InMemoryQuestionAdapter", "Adaptador memoria (salida)", "Implementa PreguntaRepositoryPort con ConcurrentHashMap.")
@@ -252,7 +281,7 @@ classDiagram
       -boolean correct
     }
 
-    class QuestionService {
+    class QuestionApplicationService {
       <<implementa los puertos de entrada>>
     }
     class JpaQuestionAdapter {
@@ -265,14 +294,14 @@ classDiagram
       <<adaptador de salida>>
     }
 
-    CrearPreguntaUseCase <|.. QuestionService
-    EvaluarPreguntaUseCase <|.. QuestionService
+    CrearPreguntaUseCase <|.. QuestionApplicationService
+    EvaluarPreguntaUseCase <|.. QuestionApplicationService
     PreguntaRepositoryPort <|.. JpaQuestionAdapter
     PreguntaRepositoryPort <|.. InMemoryQuestionAdapter
     NotificacionPort <|.. RabbitMQPublisher
 
-    QuestionService --> PreguntaRepositoryPort : usa
-    QuestionService --> NotificacionPort : usa
+    QuestionApplicationService --> PreguntaRepositoryPort : usa
+    QuestionApplicationService --> NotificacionPort : usa
     Question *-- Enunciado
     Question *-- Justificacion
     Question "1" o-- "4" AnswerOption

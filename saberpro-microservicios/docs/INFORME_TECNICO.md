@@ -14,7 +14,8 @@ Laboratorio de Ingeniería de Software II
   - Ivan Alexander López  
 - **Fecha:** Popayán, Noviembre de 2026  
 - **Repositorio GitHub:** [santyxswc/Lab_ing_softwareII](https://github.com/santyxswc/Lab_ing_softwareII)  
-- **Pull Request de integración:** [santyxswc/Lab_ing_softwareII#1](https://github.com/santyxswc/Lab_ing_softwareII/pull/1)  
+- **Pull Requests de integración:** [#1](https://github.com/santyxswc/Lab_ing_softwareII/pull/1) (entrega inicial) y [#2](https://github.com/santyxswc/Lab_ing_softwareII/pull/2) (ajustes a la guía)  
+- **Informe en el formato institucional (Word):** [`Informe-Tecnico-Taller13.docx`](Informe-Tecnico-Taller13.docx)  
 
 ---
 
@@ -163,71 +164,85 @@ aserciones se ejecutan contra `InMemoryQuestionAdapter` y contra `JpaQuestionAda
 | Corte II | Microservicios y GoF | Bounded Contexts autónomos, REST síncrono, eventos AMQP con RabbitMQ, patrones Builder, State y Adapter, JPA | `saberpro-microservicios/` (Parcial 2) | 35% |
 | Corte III | DDD, Hexagonal y Docker | Dominio puro en Java, puertos y adaptadores, intercambiabilidad InMemory vs JPA, `Dockerfile` y Docker Compose | `banco-preguntas-hexagonal/` (Taller 12) y `saberpro-microservicios/` + `docker-compose.yml` (Taller 13) | 40% |
 
-## 2. Modelo C4 Completo (Mermaid)
+## 2. Modelo C4 Completo
+
+Los cuatro niveles también están como imagen en [`diagramas/`](diagramas/).
 
 ### 2.1 Nivel 1 — Contexto del Sistema
 
 ```mermaid
-C4Context
-    title Nivel 1 — Contexto: Banco de Preguntas Saber PRO
-    Person(docente, "Docente / Evaluador", "Crea reactivos, los envia a revision y consulta su estado final.")
-    System(saberpro, "Ecosistema Saber PRO", "Microservicios que construyen, validan, persisten y gestionan el ciclo de vida de reactivos tipo Saber PRO.")
-    Rel(docente, saberpro, "Consume la API REST (HTTP/JSON)", "HTTPS")
+flowchart LR
+    docente(["<b>Docente / Evaluador</b><br/>[Persona]<br/>Crea reactivos, los envía a revisión<br/>y consulta su estado final"])
+    saber["<b>Ecosistema Saber PRO</b><br/>[Sistema de software]<br/>Microservicios que construyen, validan,<br/>persisten y gestionan el ciclo de vida<br/>de reactivos tipo Saber PRO"]
+    docente -- "Consume la API REST<br/>[HTTP / JSON]" --> saber
+    classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef sistema fill:#1168bd,stroke:#0b4884,color:#ffffff
+    class docente persona
+    class saber sistema
 ```
 
 ### 2.2 Nivel 2 — Contenedores (red Docker `saberpro-net`)
 
 ```mermaid
-C4Container
-    title Nivel 2 — Contenedores sobre la red Docker saberpro-net (bridge)
-    Person(docente, "Docente / Evaluador", "Usuario final de la API.")
-
-    Container_Boundary(net, "Red Docker: saberpro-net (bridge)") {
-        Container(q, "question-service", "Spring Boot 3 / Java 17", "Adaptador REST, DDD y puertos hexagonales. Expone el puerto 8083.")
-        Container(v, "validation-service", "Spring Boot 3 / Java 17", "Valida la justificacion (min. 15 caracteres). Expone el puerto 8082.")
-        Container(l, "lifecycle-service", "Spring Boot 3 / Java 17", "Consume el comando y aplica State (DRAFT a PENDING_REVIEW). Expone el puerto 8084.")
-        ContainerQueue(rmq, "rabbitmq", "RabbitMQ 3 management", "Exchange saberpro.direct.exchange y colas. Puertos 5672 y 15672.")
-        ContainerDb(qdb, "H2 questiondb", "H2 en archivo", "Tablas de preguntas y opciones de question-service.")
-        ContainerDb(ldb, "H2 lifecycledb", "H2 en archivo", "Tablas de ciclos de vida y operaciones de lifecycle-service.")
-    }
-
-    Rel(docente, q, "POST /questions, POST /questions/{id}/submit, GET /questions", "REST / JSON")
-    Rel(q, v, "POST /validate (sincrono)", "REST / JSON")
-    Rel(q, rmq, "Publica SubmitQuestionForReview (asincrono)", "AMQP")
-    Rel(rmq, l, "question.submit.review.queue", "AMQP")
-    Rel(l, rmq, "Publica QuestionStatusChanged", "AMQP")
-    Rel(rmq, q, "question.status.changed.queue", "AMQP")
-    Rel(q, qdb, "Lee y escribe (JPA)", "JDBC")
-    Rel(l, ldb, "Lee y escribe (JPA)", "JDBC")
+flowchart TB
+    docente(["<b>Docente / Evaluador</b><br/>[Persona]<br/>Usuario final de la API"])
+    subgraph red["Red Docker: saberpro-net (bridge) — docker-compose.yml"]
+        direction TB
+        q["<b>question-service</b><br/>[Contenedor: Spring Boot 3 / Java 17]<br/>Adaptador REST, DDD y puertos hexagonales<br/>Puerto 8083"]
+        v["<b>validation-service</b><br/>[Contenedor: Spring Boot 3 / Java 17]<br/>Valida la justificación (mín. 15 caracteres)<br/>Puerto 8082"]
+        mq[["<b>rabbitmq</b><br/>[Contenedor: RabbitMQ 3 management]<br/>saberpro.direct.exchange y colas<br/>Puertos 5672 y 15672"]]
+        l["<b>lifecycle-service</b><br/>[Contenedor: Spring Boot 3 / Java 17]<br/>Consume el comando y aplica State<br/>(DRAFT a PENDING_REVIEW) · Puerto 8084"]
+        qdb[("<b>H2 questiondb</b><br/>[Volumen question-data]<br/>Preguntas y opciones")]
+        ldb[("<b>H2 lifecycledb</b><br/>[Volumen lifecycle-data]<br/>Ciclos de vida y operaciones")]
+    end
+    docente -- "POST /questions<br/>POST /questions/{id}/submit<br/>GET /questions [HTTP / JSON]" --> q
+    q -- "POST /validate<br/>[REST síncrono]" --> v
+    q -- "Publica SubmitQuestionForReview<br/>[AMQP asíncrono]" --> mq
+    mq -- "Entrega el comando<br/>[AMQP]" --> l
+    l -- "Publica QuestionStatusChanged<br/>[AMQP]" --> mq
+    mq -- "Entrega el evento<br/>[AMQP]" --> q
+    q -- "Lee y escribe<br/>[JPA / JDBC]" --> qdb
+    l -- "Lee y escribe<br/>[JPA / JDBC]" --> ldb
+    classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef cont fill:#438dd5,stroke:#2e6295,color:#ffffff
+    class docente persona
+    class q,v,mq,l,qdb,ldb cont
+    style red fill:#ffffff,stroke:#444444,stroke-dasharray: 5 5,color:#444444
 ```
 
 ### 2.3 Nivel 3 — Componentes internos de `question-service`
 
 ```mermaid
-C4Component
-    title Nivel 3 — Componentes de question-service
-
-    Person(docente, "Docente / Evaluador", "Usuario de la API.")
-    System_Ext(v, "validation-service", "Valida la justificacion en el puerto 8082.")
-    System_Ext(rmq, "RabbitMQ", "Broker de mensajeria AMQP.")
-
-    Container_Boundary(q, "question-service") {
-        Component(rest, "QuestionRestController", "Adaptador REST (entrada)", "Expone /questions y traduce JSON a CrearPreguntaCommand.")
-        Component(svc, "QuestionApplicationService", "Aplicacion", "Implementa CrearPreguntaUseCase y EvaluarPreguntaUseCase; orquesta el flujo.")
-        Component(dom, "Dominio (Question y VOs)", "Java puro", "Builder, invariantes, AnswerOption, Enunciado, Justificacion, ReglaNegocioException.")
-        Component(jpa, "JpaQuestionAdapter", "Adaptador JPA (salida)", "Implementa PreguntaRepositoryPort sobre Spring Data JPA y H2.")
-        Component(mem, "InMemoryQuestionAdapter", "Adaptador memoria (salida)", "Implementa PreguntaRepositoryPort con ConcurrentHashMap.")
-        Component(pub, "RabbitMQPublisher", "Adaptador AMQP (salida)", "Implementa NotificacionPort publicando en RabbitMQ.")
-    }
-
-    Rel(docente, rest, "HTTP / JSON")
-    Rel(rest, svc, "crearPregunta / enviarAEvaluacion")
-    Rel(svc, dom, "Construye y valida el agregado")
-    Rel(svc, jpa, "PreguntaRepositoryPort (jpa)")
-    Rel(svc, mem, "PreguntaRepositoryPort (memory)")
-    Rel(svc, pub, "NotificacionPort")
-    Rel(svc, v, "POST /validate (JustificationValidator)", "REST / JSON")
-    Rel(pub, rmq, "convertAndSend", "AMQP")
+flowchart TB
+    docente(["<b>Docente / Evaluador</b><br/>[Persona]"])
+    subgraph qs["question-service [Contenedor]"]
+        direction TB
+        rest["<b>QuestionRestController</b><br/>[api · adaptador de entrada REST]<br/>Expone /questions y traduce JSON<br/>a CrearPreguntaCommand"]
+        svc["<b>QuestionApplicationService</b><br/>[application]<br/>Implementa CrearPreguntaUseCase y<br/>EvaluarPreguntaUseCase; orquesta el flujo"]
+        dom["<b>Dominio (Question y Value Objects)</b><br/>[domain · Java puro]<br/>Builder, invariantes, AnswerOption, Enunciado,<br/>Justificacion, ReglaNegocioException"]
+        jpa["<b>JpaQuestionAdapter</b><br/>[infrastructure.jpa]<br/>Implementa PreguntaRepositoryPort<br/>con Spring Data JPA y H2"]
+        mem["<b>InMemoryQuestionAdapter</b><br/>[infrastructure.memory]<br/>Implementa PreguntaRepositoryPort<br/>con ConcurrentHashMap"]
+        pub["<b>RabbitMQPublisher</b><br/>[infrastructure.messaging]<br/>Implementa NotificacionPort<br/>publicando en RabbitMQ"]
+        cli["<b>ValidationServiceRestClient</b><br/>[infrastructure.client]<br/>Implementa JustificationValidator"]
+    end
+    val["<b>validation-service</b><br/>[Sistema externo]<br/>Valida la justificación · 8082"]
+    mq[["<b>RabbitMQ</b><br/>[Sistema externo]<br/>Broker de mensajería AMQP"]]
+    docente -- "HTTP / JSON" --> rest
+    rest -- "crearPregunta /<br/>enviarAEvaluacion" --> svc
+    svc -- "Construye y valida<br/>el agregado" --> dom
+    svc -- "PreguntaRepositoryPort<br/>(adapter=jpa)" --> jpa
+    svc -. "PreguntaRepositoryPort<br/>(adapter=memory)" .-> mem
+    svc -- "NotificacionPort" --> pub
+    svc -- "JustificationValidator" --> cli
+    cli -- "POST /validate<br/>[REST / JSON]" --> val
+    pub -- "convertAndSend<br/>[AMQP]" --> mq
+    classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef comp fill:#85bbf0,stroke:#5d82a8,color:#000000
+    classDef ext fill:#999999,stroke:#6b6b6b,color:#ffffff
+    class docente persona
+    class rest,svc,dom,jpa,mem,pub,cli comp
+    class val,mq ext
+    style qs fill:#ffffff,stroke:#444444,stroke-dasharray: 5 5,color:#444444
 ```
 
 ### 2.4 Nivel 4 — Diagrama de Código (clases e interfaces)
@@ -319,6 +334,7 @@ Las capturas se almacenan en [`saberpro-microservicios/docs/evidencias/`](eviden
 | 02 | `02-pruebas-rest.png` | Ciclo REST completo contra `question-service`: consulta `200 OK`, creación `201 Created` en estado `DRAFT`, rechazo de invariante `400 Bad Request` y envío asíncrono `202 Accepted` con `operationId`. |
 | 03 | `03-rabbitmq-queues.png` | Colas `question.submit.review.queue` y `question.status.changed.queue` activas en la consola de RabbitMQ, con sus consumidores y bindings en `saberpro.direct.exchange`. |
 | 04 | `04-lifecycle-logs.png` | Logs de `lifecycle-service`: consumo idempotente del comando y transición de estado aplicada (`APPLIED: DRAFT -> PENDING_REVIEW`). |
+| 05 | `05-intercambiabilidad-adaptadores.png` | El mismo contrato del puerto pasa contra `InMemoryQuestionAdapter` y `JpaQuestionAdapter`; el dominio no importa frameworks y el servicio responde `201` con el adaptador en memoria, sin ejecutar SQL. |
 
 ### 3.1 01 — Orquestación de contenedores
 
@@ -354,6 +370,12 @@ Operación <uuid> → APPLIED: DRAFT -> PENDING_REVIEW
 
 ![Logs de lifecycle-service](evidencias/04-lifecycle-logs.png)
 
+### 3.5 05 — Intercambiabilidad de adaptadores (InMemory vs JPA)
+
+`PreguntaRepositoryPortContract` se ejecuta contra los dos adaptadores y ambos lo cumplen. Con `SABERPRO_REPOSITORY_ADAPTER=memory` el contenedor de `question-service` crea la pregunta sin ejecutar ninguna sentencia SQL.
+
+![Intercambiabilidad de adaptadores](evidencias/05-intercambiabilidad-adaptadores.png)
+
 ---
 
 ## 4. Conclusiones
@@ -368,7 +390,8 @@ Operación <uuid> → APPLIED: DRAFT -> PENDING_REVIEW
 ## 5. Enlaces y Referencias
 
 - **Repositorio GitHub:** [santyxswc/Lab_ing_softwareII](https://github.com/santyxswc/Lab_ing_softwareII)
-- **Pull Request de integración:** [santyxswc/Lab_ing_softwareII#1](https://github.com/santyxswc/Lab_ing_softwareII/pull/1)
+- **Pull Requests de integración:** [#1](https://github.com/santyxswc/Lab_ing_softwareII/pull/1) y [#2](https://github.com/santyxswc/Lab_ing_softwareII/pull/2)
+- **Informe en formato Word:** [`Informe-Tecnico-Taller13.docx`](Informe-Tecnico-Taller13.docx)
 - **Módulo del Taller 13:** `saberpro-microservicios/`
 - **Informe de la Fase I (Taller 12):** [`banco-preguntas-hexagonal/docs/INFORME_TECNICO.md`](../../banco-preguntas-hexagonal/docs/INFORME_TECNICO.md)
 - **README del módulo:** [`saberpro-microservicios/README.md`](../README.md)

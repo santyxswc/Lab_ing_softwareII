@@ -12,3 +12,6 @@ Thumbs.db
 docs/html/
 docs/latex/
 docs/doxygen-advertencias.log
+
+# Guias y enunciados del curso (no se suben al repositorio)
+*.pdf

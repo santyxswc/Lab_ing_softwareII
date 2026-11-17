@@ -136,7 +136,9 @@ docker compose down
 
 No hace falta tener Java ni Maven instalados: la compilación ocurre dentro de Docker.
 
-El informe técnico (con el modelo C4 en Mermaid y las evidencias) está en
+El informe técnico final, en el formato institucional, es
+[`saberpro-microservicios/docs/Informe-Tecnico-Taller13.docx`](saberpro-microservicios/docs/Informe-Tecnico-Taller13.docx)
+(modelo C4 niveles 1 a 4, trazabilidad semestral y capturas de Docker y RabbitMQ). La versión en Markdown está en
 [`saberpro-microservicios/docs/INFORME_TECNICO.md`](saberpro-microservicios/docs/INFORME_TECNICO.md).
 
 ---

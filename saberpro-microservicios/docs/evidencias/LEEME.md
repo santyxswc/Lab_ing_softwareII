@@ -9,6 +9,7 @@ Deben conservar **exactamente** estos nombres (el informe [`../INFORME_TECNICO.m
 | `02-pruebas-rest.png` | Pruebas REST contra `question-service`: `200 OK` (consulta), `201 Created` (creación en `DRAFT`), `400 Bad Request` (invariante violada) y `202 Accepted` con `operationId`. |
 | `03-rabbitmq-queues.png` | Consola de RabbitMQ (`http://localhost:15672`) con las colas `question.submit.review.queue` y `question.status.changed.queue`. |
 | `04-lifecycle-logs.png` | Logs de `lifecycle-service` (`docker compose logs -f lifecycle-service`): consumo del comando y transición `APPLIED: DRAFT -> PENDING_REVIEW`. |
+| `05-intercambiabilidad-adaptadores.png` | Contrato del puerto contra `InMemoryQuestionAdapter` y `JpaQuestionAdapter`, dominio sin frameworks y `201` con el adaptador en memoria. |
 
 > Las capturas previas del Parcial 2 (numeradas `01-…` a `14-…` con otros nombres) permanecen en esta carpeta como respaldo; no reemplazan a las cuatro anteriores.
 

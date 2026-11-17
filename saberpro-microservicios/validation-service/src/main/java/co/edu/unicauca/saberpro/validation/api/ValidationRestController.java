@@ -1,9 +1,9 @@
 /**
- * @file ValidationController.java
+ * @file ValidationRestController.java
  * @brief Endpoint REST POST /validate.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.validation.infrastructure.rest;
+package co.edu.unicauca.saberpro.validation.api;
 
 import co.edu.unicauca.saberpro.validation.application.JustificationValidationService;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * de "el servicio falló" (error HTTP o de red).
  */
 @RestController
-public class ValidationController {
+public class ValidationRestController {
 
     private final JustificationValidationService service;
 
@@ -27,7 +27,7 @@ public class ValidationController {
      * @brief Inyecta el caso de uso.
      * @param service Servicio de validación.
      */
-    public ValidationController(JustificationValidationService service) {
+    public ValidationRestController(JustificationValidationService service) {
         this.service = service;
     }
 

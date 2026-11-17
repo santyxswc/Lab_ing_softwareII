@@ -3,7 +3,7 @@
  * @brief Cuerpo JSON recibido en POST /validate.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.validation.infrastructure.rest;
+package co.edu.unicauca.saberpro.validation.api;
 
 /**
  * @brief Petición de validación.

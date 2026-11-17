@@ -3,12 +3,10 @@
  * @brief Mapeador bidireccional entre Question (dominio) y QuestionRecord (JPA).
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.jpa.mapper;
+package co.edu.unicauca.saberpro.question.infrastructure.jpa;
 
 import co.edu.unicauca.saberpro.question.domain.model.AnswerOption;
 import co.edu.unicauca.saberpro.question.domain.model.Question;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.record.AnswerOptionRecord;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.record.QuestionRecord;
 import org.springframework.stereotype.Component;
 
 /**

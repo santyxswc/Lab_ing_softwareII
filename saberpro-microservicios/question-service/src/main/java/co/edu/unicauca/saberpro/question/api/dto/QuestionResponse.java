@@ -3,7 +3,7 @@
  * @brief Representación JSON de una pregunta.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.rest.dto;
+package co.edu.unicauca.saberpro.question.api.dto;
 
 import co.edu.unicauca.saberpro.question.domain.model.Question;
 

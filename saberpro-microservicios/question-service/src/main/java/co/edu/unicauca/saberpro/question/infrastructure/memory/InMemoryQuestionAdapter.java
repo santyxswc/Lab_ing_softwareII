@@ -3,7 +3,7 @@
  * @brief Adaptador de salida (Driven / Outbound) en memoria con ConcurrentHashMap.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.persistence.memory;
+package co.edu.unicauca.saberpro.question.infrastructure.memory;
 
 import co.edu.unicauca.saberpro.question.domain.model.Question;
 import co.edu.unicauca.saberpro.question.domain.ports.outbound.PreguntaRepositoryPort;

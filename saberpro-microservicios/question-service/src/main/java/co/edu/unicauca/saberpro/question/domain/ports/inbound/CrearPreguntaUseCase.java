@@ -11,7 +11,7 @@ import co.edu.unicauca.saberpro.question.domain.model.Question;
  * @brief Puerto de Entrada de la Arquitectura Hexagonal.
  *
  * Define la operación de creación de un reactivo. La implementa un servicio
- * de aplicación ({@code QuestionService}) y la invoca el adaptador REST.
+ * de aplicación ({@code QuestionApplicationService}) y la invoca el adaptador REST.
  */
 public interface CrearPreguntaUseCase {
 

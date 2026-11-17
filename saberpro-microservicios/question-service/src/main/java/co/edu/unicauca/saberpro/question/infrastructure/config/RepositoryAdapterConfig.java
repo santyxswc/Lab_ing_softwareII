@@ -6,10 +6,10 @@
 package co.edu.unicauca.saberpro.question.infrastructure.config;
 
 import co.edu.unicauca.saberpro.question.domain.ports.outbound.PreguntaRepositoryPort;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.mapper.QuestionDomainMapper;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.repository.JpaQuestionAdapter;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.repository.SpringQuestionDataRepository;
-import co.edu.unicauca.saberpro.question.infrastructure.persistence.memory.InMemoryQuestionAdapter;
+import co.edu.unicauca.saberpro.question.infrastructure.jpa.QuestionDomainMapper;
+import co.edu.unicauca.saberpro.question.infrastructure.jpa.JpaQuestionAdapter;
+import co.edu.unicauca.saberpro.question.infrastructure.jpa.SpringQuestionDataRepository;
+import co.edu.unicauca.saberpro.question.infrastructure.memory.InMemoryQuestionAdapter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

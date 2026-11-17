@@ -1,9 +1,9 @@
 /**
- * @file SubmitQuestionForReviewListener.java
+ * @file QuestionReviewListener.java
  * @brief Consumidor AMQP de question.submit.review.queue.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.lifecycle.infrastructure.messaging;
+package co.edu.unicauca.saberpro.lifecycle.messaging;
 
 import co.edu.unicauca.saberpro.lifecycle.application.LifecycleService;
 import co.edu.unicauca.saberpro.lifecycle.application.dto.SubmitQuestionForReview;
@@ -21,9 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
  * se guardan juntos o no se guardan.
  */
 @Component
-public class SubmitQuestionForReviewListener {
+public class QuestionReviewListener {
 
-    private static final Logger log = LoggerFactory.getLogger(SubmitQuestionForReviewListener.class);
+    private static final Logger log = LoggerFactory.getLogger(QuestionReviewListener.class);
 
     private final LifecycleService service;
 
@@ -31,7 +31,7 @@ public class SubmitQuestionForReviewListener {
      * @brief Inyecta el caso de uso.
      * @param service Servicio de ciclo de vida.
      */
-    public SubmitQuestionForReviewListener(LifecycleService service) {
+    public QuestionReviewListener(LifecycleService service) {
         this.service = service;
     }
 

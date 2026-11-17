@@ -3,7 +3,7 @@
  * @brief Publica QuestionStatusChanged en RabbitMQ.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.lifecycle.infrastructure.messaging;
+package co.edu.unicauca.saberpro.lifecycle.messaging;
 
 import co.edu.unicauca.saberpro.lifecycle.application.dto.QuestionStatusChanged;
 import co.edu.unicauca.saberpro.lifecycle.application.port.StatusChangePublisher;

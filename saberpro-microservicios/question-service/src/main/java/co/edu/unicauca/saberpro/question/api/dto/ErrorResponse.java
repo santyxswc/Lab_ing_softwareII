@@ -3,7 +3,7 @@
  * @brief Formato uniforme de los errores HTTP.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.rest.dto;
+package co.edu.unicauca.saberpro.question.api.dto;
 
 import java.time.Instant;
 import java.util.List;

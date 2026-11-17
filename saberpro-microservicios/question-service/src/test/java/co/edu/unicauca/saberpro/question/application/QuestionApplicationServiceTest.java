@@ -1,5 +1,5 @@
 /**
- * @file QuestionServiceTest.java
+ * @file QuestionApplicationServiceTest.java
  * @brief Pruebas de los casos de uso con dobles de prueba en memoria.
  * @author Santiago Caicedo
  */
@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @brief Verifica el flujo crear / enviar a evaluación sin Spring ni red.
  */
-class QuestionServiceTest {
+class QuestionApplicationServiceTest {
 
     /** @brief Adaptador de persistencia en memoria que asigna ids incrementales. */
     static class InMemoryRepository implements PreguntaRepositoryPort {
@@ -68,8 +68,8 @@ class QuestionServiceTest {
     private final JustificationValidator validator = j -> j.contains("RECHAZADA")
             ? new JustificationValidator.Outcome(false, "regla de prueba")
             : new JustificationValidator.Outcome(true, "ok");
-    private final QuestionService service =
-            new QuestionService(QuestionBuilder::new, validator, repository, notificacionPort);
+    private final QuestionApplicationService service =
+            new QuestionApplicationService(QuestionBuilder::new, validator, repository, notificacionPort);
 
     private static CrearPreguntaCommand command(String justification) {
         return new CrearPreguntaCommand("¿2 + 2?", justification,

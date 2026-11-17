@@ -3,12 +3,10 @@
  * @brief Adaptador de salida (Driven / Outbound) con Spring Data JPA y H2.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.jpa.repository;
+package co.edu.unicauca.saberpro.question.infrastructure.jpa;
 
 import co.edu.unicauca.saberpro.question.domain.model.Question;
 import co.edu.unicauca.saberpro.question.domain.ports.outbound.PreguntaRepositoryPort;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.mapper.QuestionDomainMapper;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.record.QuestionRecord;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;

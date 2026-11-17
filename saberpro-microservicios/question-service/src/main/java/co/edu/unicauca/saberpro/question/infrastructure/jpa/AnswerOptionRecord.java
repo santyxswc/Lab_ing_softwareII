@@ -3,7 +3,7 @@
  * @brief Entidad JPA de una opción de respuesta (tabla ANSWER_OPTIONS).
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.jpa.record;
+package co.edu.unicauca.saberpro.question.infrastructure.jpa;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

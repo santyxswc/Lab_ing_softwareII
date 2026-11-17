@@ -1,5 +1,5 @@
 /**
- * @file QuestionService.java
+ * @file QuestionApplicationService.java
  * @brief Casos de uso de Question Service (implementa los puertos de entrada).
  * @author Santiago Caicedo
  */
@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * puertos de entrada {@link CrearPreguntaUseCase} y {@link EvaluarPreguntaUseCase}.
  * Spring lo registra como bean en {@code ApplicationConfig}.
  */
-public class QuestionService implements CrearPreguntaUseCase, EvaluarPreguntaUseCase {
+public class QuestionApplicationService implements CrearPreguntaUseCase, EvaluarPreguntaUseCase {
 
     private final Supplier<IQuestionBuilder> builderFactory;
     private final JustificationValidator validator;
@@ -43,7 +43,7 @@ public class QuestionService implements CrearPreguntaUseCase, EvaluarPreguntaUse
      * @param repository       Puerto de persistencia de preguntas.
      * @param notificacionPort Puerto de notificación (RabbitMQ).
      */
-    public QuestionService(Supplier<IQuestionBuilder> builderFactory, JustificationValidator validator,
+    public QuestionApplicationService(Supplier<IQuestionBuilder> builderFactory, JustificationValidator validator,
                            PreguntaRepositoryPort repository, NotificacionPort notificacionPort) {
         this.builderFactory = builderFactory;
         this.validator = validator;

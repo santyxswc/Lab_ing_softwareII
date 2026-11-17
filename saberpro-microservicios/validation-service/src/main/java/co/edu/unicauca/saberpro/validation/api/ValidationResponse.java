@@ -3,7 +3,7 @@
  * @brief Cuerpo JSON devuelto por POST /validate.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.validation.infrastructure.rest;
+package co.edu.unicauca.saberpro.validation.api;
 
 import co.edu.unicauca.saberpro.validation.domain.ValidationResult;
 

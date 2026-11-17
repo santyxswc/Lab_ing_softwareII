@@ -3,7 +3,7 @@
  * @brief Entidad JPA que representa una pregunta en la tabla QUESTIONS.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.jpa.record;
+package co.edu.unicauca.saberpro.question.infrastructure.jpa;
 
 import co.edu.unicauca.saberpro.question.domain.model.QuestionStatus;
 import jakarta.persistence.CascadeType;

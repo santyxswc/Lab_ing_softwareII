@@ -3,9 +3,8 @@
  * @brief Repositorio Spring Data JPA sobre QuestionRecord.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.jpa.repository;
+package co.edu.unicauca.saberpro.question.infrastructure.jpa;
 
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.record.QuestionRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**

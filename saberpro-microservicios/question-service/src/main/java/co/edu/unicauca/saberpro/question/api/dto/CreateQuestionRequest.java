@@ -3,7 +3,7 @@
  * @brief Cuerpo JSON de POST /questions.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.rest.dto;
+package co.edu.unicauca.saberpro.question.api.dto;
 
 import co.edu.unicauca.saberpro.question.domain.ports.inbound.CrearPreguntaCommand;
 
@@ -33,7 +33,7 @@ public record CreateQuestionRequest(String statement, String justification,
 
     /**
      * @brief Convierte el DTO HTTP en comando de aplicación.
-     * @return Comando para {@code QuestionService.create}.
+     * @return Comando para {@code QuestionApplicationService.create}.
      */
     public CrearPreguntaCommand toCommand() {
         List<CrearPreguntaCommand.OptionData> data = options == null ? null

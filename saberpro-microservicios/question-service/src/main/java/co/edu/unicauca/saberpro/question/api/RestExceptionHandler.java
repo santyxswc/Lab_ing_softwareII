@@ -3,14 +3,14 @@
  * @brief Traduce las excepciones a respuestas HTTP.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.rest;
+package co.edu.unicauca.saberpro.question.api;
 
 import co.edu.unicauca.saberpro.question.application.exception.ValidationRejectedException;
 import co.edu.unicauca.saberpro.question.application.exception.ValidationServiceUnavailableException;
 import co.edu.unicauca.saberpro.question.domain.exception.InvalidQuestionException;
 import co.edu.unicauca.saberpro.question.domain.exception.QuestionNotFoundException;
 import co.edu.unicauca.saberpro.question.domain.exception.ReglaNegocioException;
-import co.edu.unicauca.saberpro.question.infrastructure.rest.dto.ErrorResponse;
+import co.edu.unicauca.saberpro.question.api.dto.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;

@@ -3,7 +3,7 @@
  * @brief Cuerpo de la respuesta 202 Accepted de POST /questions/{id}/submit.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.rest.dto;
+package co.edu.unicauca.saberpro.question.api.dto;
 
 /**
  * @brief Confirma que el comando se publicó; el cambio de estado ocurre después.

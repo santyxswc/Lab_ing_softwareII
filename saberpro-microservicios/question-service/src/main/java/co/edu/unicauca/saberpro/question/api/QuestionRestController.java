@@ -3,13 +3,13 @@
  * @brief Adaptador de entrada (Driving / Inbound) HTTP de Question Service.
  * @author Santiago Caicedo
  */
-package co.edu.unicauca.saberpro.question.infrastructure.rest;
+package co.edu.unicauca.saberpro.question.api;
 
-import co.edu.unicauca.saberpro.question.application.QuestionService;
+import co.edu.unicauca.saberpro.question.application.QuestionApplicationService;
 import co.edu.unicauca.saberpro.question.domain.model.Question;
-import co.edu.unicauca.saberpro.question.infrastructure.rest.dto.CreateQuestionRequest;
-import co.edu.unicauca.saberpro.question.infrastructure.rest.dto.QuestionResponse;
-import co.edu.unicauca.saberpro.question.infrastructure.rest.dto.SubmitAcceptedResponse;
+import co.edu.unicauca.saberpro.question.api.dto.CreateQuestionRequest;
+import co.edu.unicauca.saberpro.question.api.dto.QuestionResponse;
+import co.edu.unicauca.saberpro.question.api.dto.SubmitAcceptedResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,13 +36,13 @@ import java.util.List;
 @RequestMapping("/questions")
 public class QuestionRestController {
 
-    private final QuestionService service;
+    private final QuestionApplicationService service;
 
     /**
      * @brief Inyecta el caso de uso.
      * @param service Servicio de preguntas.
      */
-    public QuestionRestController(QuestionService service) {
+    public QuestionRestController(QuestionApplicationService service) {
         this.service = service;
     }
 

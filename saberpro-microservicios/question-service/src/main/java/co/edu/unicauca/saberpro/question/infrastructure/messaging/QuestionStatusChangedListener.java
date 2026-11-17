@@ -5,7 +5,7 @@
  */
 package co.edu.unicauca.saberpro.question.infrastructure.messaging;
 
-import co.edu.unicauca.saberpro.question.application.QuestionService;
+import co.edu.unicauca.saberpro.question.application.QuestionApplicationService;
 import co.edu.unicauca.saberpro.question.domain.exception.DomainException;
 import co.edu.unicauca.saberpro.question.domain.model.QuestionStatus;
 import co.edu.unicauca.saberpro.question.infrastructure.config.MessagingTopology;
@@ -23,13 +23,13 @@ public class QuestionStatusChangedListener {
 
     private static final Logger log = LoggerFactory.getLogger(QuestionStatusChangedListener.class);
 
-    private final QuestionService service;
+    private final QuestionApplicationService service;
 
     /**
      * @brief Inyecta el caso de uso.
      * @param service Servicio de preguntas.
      */
-    public QuestionStatusChangedListener(QuestionService service) {
+    public QuestionStatusChangedListener(QuestionApplicationService service) {
         this.service = service;
     }
 

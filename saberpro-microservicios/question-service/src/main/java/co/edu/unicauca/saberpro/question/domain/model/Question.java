@@ -23,17 +23,17 @@ import java.util.Objects;
 public final class Question {
 
     private final Long id;
-    private final String statement;
-    private final String justification;
+    private final Enunciado enunciado;
+    private final Justificacion justificacion;
     private final List<AnswerOption> options;
     private QuestionStatus status;
     private final Instant createdAt;
 
-    private Question(Long id, String statement, String justification,
+    private Question(Long id, Enunciado enunciado, Justificacion justificacion,
                      List<AnswerOption> options, QuestionStatus status, Instant createdAt) {
         this.id = id;
-        this.statement = Objects.requireNonNull(statement, "statement");
-        this.justification = Objects.requireNonNull(justification, "justification");
+        this.enunciado = Objects.requireNonNull(enunciado, "enunciado");
+        this.justificacion = Objects.requireNonNull(justificacion, "justificacion");
         this.options = List.copyOf(options);
         this.status = Objects.requireNonNull(status, "status");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
@@ -50,7 +50,8 @@ public final class Question {
      * @return Pregunta sin id (aún no persistida).
      */
     public static Question newDraft(String statement, String justification, List<AnswerOption> options) {
-        return new Question(null, statement, justification, options, QuestionStatus.DRAFT, Instant.now());
+        return new Question(null, new Enunciado(statement), new Justificacion(justification),
+                options, QuestionStatus.DRAFT, Instant.now());
     }
 
     /**
@@ -65,7 +66,8 @@ public final class Question {
      */
     public static Question restore(Long id, String statement, String justification,
                                    List<AnswerOption> options, QuestionStatus status, Instant createdAt) {
-        return new Question(id, statement, justification, options, status, createdAt);
+        return new Question(id, new Enunciado(statement), new Justificacion(justification),
+                options, status, createdAt);
     }
 
     /**
@@ -100,12 +102,12 @@ public final class Question {
 
     /** @return Enunciado. */
     public String getStatement() {
-        return statement;
+        return enunciado.valor();
     }
 
     /** @return Justificación de la respuesta correcta. */
     public String getJustification() {
-        return justification;
+        return justificacion.valor();
     }
 
     /** @return Opciones (lista inmutable). */

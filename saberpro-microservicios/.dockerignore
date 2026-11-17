@@ -1,0 +1,9 @@
+**/target/
+data/
+docs/
+postman/
+scripts/
+.git/
+.idea/
+.vscode/
+*.md

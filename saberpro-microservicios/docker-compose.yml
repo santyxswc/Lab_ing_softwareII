@@ -1,13 +1,110 @@
 # @file docker-compose.yml
-# @brief Levanta RabbitMQ con la consola de administración.
+# @brief Orquesta RabbitMQ y los tres microservicios sobre la red saberpro-net.
 # @author Santiago Caicedo
 #
-# Uso: docker compose up -d
-# Consola: http://localhost:15672 (guest / guest)
+# Un solo comando compila los .jar (dentro de Docker) y levanta todo:
+#   docker compose up -d --build
+#
+# Funciona igual desde la raíz del repositorio, cuyo docker-compose.yml
+# incluye este archivo. No requiere Maven ni Java en la máquina.
+#
+#   Validation Service  http://localhost:8082
+#   Question Service    http://localhost:8083
+#   Lifecycle Service   http://localhost:8084
+#   RabbitMQ (AMQP)     localhost:5672
+#   Consola RabbitMQ    http://localhost:15672 (guest / guest)
 services:
+
+  # ---------------------------------------------------------------------------
+  # Broker de mensajería
+  # ---------------------------------------------------------------------------
   rabbitmq:
-    image: rabbitmq:4-management
+    image: rabbitmq:3-management
     container_name: saberpro-rabbitmq
     ports:
-      - "5672:5672"     # AMQP (lo usan los microservicios)
-      - "15672:15672"   # Consola web
+      - "5672:5672"     # AMQP (lo consumen los microservicios)
+      - "15672:15672"   # Consola web de administración
+    healthcheck:
+      # Los servicios esperan a que el broker acepte conexiones.
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - saberpro-net
+
+  # ---------------------------------------------------------------------------
+  # Validation Service (:8082): valida la justificación de un reactivo
+  # ---------------------------------------------------------------------------
+  validation-service:
+    build:
+      # El contexto es esta carpeta porque cada módulo hereda del pom.xml raíz.
+      context: .
+      dockerfile: validation-service/Dockerfile
+    image: saberpro/validation-service:1.0.0
+    container_name: saberpro-validation-service
+    ports:
+      - "8082:8082"
+    networks:
+      - saberpro-net
+
+  # ---------------------------------------------------------------------------
+  # Question Service (:8083): dominio puro + puertos y adaptadores
+  # ---------------------------------------------------------------------------
+  question-service:
+    build:
+      context: .
+      dockerfile: question-service/Dockerfile
+    image: saberpro/question-service:1.0.0
+    container_name: saberpro-question-service
+    ports:
+      - "8083:8083"
+    environment:
+      # Host del broker dentro de la red de Docker.
+      SPRING_RABBITMQ_HOST: rabbitmq
+      # URL de Validation Service por el nombre de servicio (DNS interno).
+      SERVICES_VALIDATION_URL: http://validation-service:8082
+      # Adaptador de persistencia: jpa (H2) o memory (InMemoryQuestionAdapter).
+      SABERPRO_REPOSITORY_ADAPTER: ${SABERPRO_REPOSITORY_ADAPTER:-jpa}
+    volumes:
+      - question-data:/app/data   # Base H2 en archivo
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      validation-service:
+        condition: service_started
+    networks:
+      - saberpro-net
+
+  # ---------------------------------------------------------------------------
+  # Lifecycle Service (:8084): consume SubmitQuestionForReview (patrón State)
+  # ---------------------------------------------------------------------------
+  lifecycle-service:
+    build:
+      context: .
+      dockerfile: lifecycle-service/Dockerfile
+    image: saberpro/lifecycle-service:1.0.0
+    container_name: saberpro-lifecycle-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+    volumes:
+      - lifecycle-data:/app/data  # Base H2 en archivo
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - saberpro-net
+
+# -----------------------------------------------------------------------------
+# Red bridge privada: los contenedores se resuelven por nombre de servicio.
+# -----------------------------------------------------------------------------
+networks:
+  saberpro-net:
+    name: saberpro-net
+    driver: bridge
+
+volumes:
+  question-data:
+  lifecycle-data:

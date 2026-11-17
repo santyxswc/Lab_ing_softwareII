@@ -10,6 +10,7 @@ Talleres de arquitectura y diseño de software — Universidad del Cauca.
 | 06 | [`productos-api`](productos-api/README.md) | **API REST** con Spring Boot, Spring Data JPA y H2 (CRUD de productos) |
 | Parcial 2 | [`saberpro-microservicios`](saberpro-microservicios/README.md) | **Microservicios** con REST síncrono, **RabbitMQ**, patrones **Builder** y **State**, y JPA limpia |
 | 12 | [`banco-preguntas-hexagonal`](banco-preguntas-hexagonal/README.md) | **Arquitectura Hexagonal (Puertos y Adaptadores)** y **DDD** con persistencia intercambiable (JPA / memoria) |
+| 13 | [`saberpro-microservicios`](saberpro-microservicios/README.md) | Entrega Final Integradora (Fase II): **Arquitectura Hexagonal** y **DDD táctico** integrados en los microservicios, con **orquestación multi-contenedor** (Docker Compose + RabbitMQ) |
 
 Cada carpeta tiene su propio README con la arquitectura, la estructura de paquetes y cómo probarla.
 
@@ -76,7 +77,7 @@ Requiere RabbitMQ en `localhost:5672`.
 
 ```bash
 cd saberpro-microservicios
-mvn clean install                               # 30 pruebas
+mvn clean install                               # 36 pruebas
 java -jar validation-service/target/validation-service-1.0.0.jar
 java -jar question-service/target/question-service-1.0.0.jar
 java -jar lifecycle-service/target/lifecycle-service-1.0.0.jar
@@ -109,13 +110,42 @@ cd banco-preguntas-hexagonal
 
 El informe técnico está en [`banco-preguntas-hexagonal/docs/INFORME_TECNICO.md`](banco-preguntas-hexagonal/docs/INFORME_TECNICO.md).
 
+## Taller 13 — Integración final: Hexagonal + DDD + Docker Compose
+
+Fase II del proyecto integrador: los microservicios del Parcial 2 adoptan la **Arquitectura Hexagonal** y el
+**DDD táctico** de la Fase I, y todo el ecosistema se conteneriza y orquesta con **Docker Compose** sobre la red
+bridge `saberpro-net`.
+
+- **Dominio puro:** `Question` (raíz del agregado) con los Value Objects `Enunciado` (no vacío) y `Justificacion`
+  (mínimo 15 caracteres → `ReglaNegocioException`), sin Spring ni JPA.
+- **Puertos:** de entrada `CrearPreguntaUseCase` y `EvaluarPreguntaUseCase`; de salida `PreguntaRepositoryPort`
+  y `NotificacionPort`.
+- **Adaptadores intercambiables:** `JpaQuestionAdapter` (H2) e `InMemoryQuestionAdapter` (`ConcurrentHashMap`),
+  elegidos con `saberpro.repository.adapter=jpa|memory`; además `RabbitMQPublisher` y `QuestionRestController`.
+- **Orquestación:** `rabbitmq` (5672/15672) + `validation-service` (8082) + `question-service` (8083) +
+  `lifecycle-service` (8084), comunicados por REST síncrono y AMQP asíncrono.
+
+- **Contenerización:** un `Dockerfile` en la raíz de cada microservicio (compila el `.jar` con Maven y lo ejecuta
+  sobre Java 17) y el [`docker-compose.yml`](docker-compose.yml) de la raíz del repositorio como orquestador único.
+
+```bash
+docker compose up -d --build      # desde la raíz: compila y levanta los 4 contenedores en la red saberpro-net
+docker compose ps
+docker compose down
+```
+
+No hace falta tener Java ni Maven instalados: la compilación ocurre dentro de Docker.
+
+El informe técnico (con el modelo C4 en Mermaid y las evidencias) está en
+[`saberpro-microservicios/docs/INFORME_TECNICO.md`](saberpro-microservicios/docs/INFORME_TECNICO.md).
+
 ---
 
 ## Requisitos
 
-- Java 21
+- Java 21 (los microservicios Saber PRO se compilan para Java 17, que es el que corre en sus contenedores)
 - Maven 3.9 o superior (`productos-api` y `banco-preguntas-hexagonal` incluyen el wrapper `mvnw`)
-- RabbitMQ (solo para el Parcial 2)
+- Docker con Docker Compose (Taller 13); RabbitMQ solo si el Parcial 2 se corre sin contenedores
 
 ## Integrantes
 

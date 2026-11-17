@@ -1,0 +1,15 @@
+# @file docker-compose.yml
+# @brief Orquestador unificado del Taller 13 (entrega final integradora).
+# @author Santiago Caicedo
+#
+# Desde la raíz del repositorio, un solo comando compila y levanta todo el
+# ecosistema del Banco de Preguntas Saber PRO:
+#   docker compose up -d --build
+#
+# La definición de los servicios (Validation :8082, Question :8083,
+# Lifecycle :8084, RabbitMQ :5672/:15672 y la red saberpro-net) vive junto
+# al código, en saberpro-microservicios/docker-compose.yml.
+name: saberpro-banco-preguntas
+
+include:
+  - saberpro-microservicios/docker-compose.yml

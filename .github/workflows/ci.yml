@@ -65,3 +65,21 @@ jobs:
           java-version: 21
           cache: maven
       - run: mvn -B verify
+
+  docker-compose:
+    name: Taller 13 · Docker Compose (despliegue y flujo integrador)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar y levantar el ecosistema
+        run: docker compose up -d --build
+      - name: Flujo integrador (201 / 400 / 202 y RabbitMQ)
+        run: ./saberpro-microservicios/scripts/smoke.sh
+      - name: Estado y logs de los contenedores
+        if: always()
+        run: |
+          docker compose ps
+          docker compose logs --tail 80
+      - name: Detener el ecosistema
+        if: always()
+        run: docker compose down -v

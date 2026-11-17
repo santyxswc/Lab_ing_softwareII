@@ -1,21 +1,21 @@
 /**
  * @file QuestionService.java
- * @brief Casos de uso de Question Service.
+ * @brief Casos de uso de Question Service (implementa los puertos de entrada).
  * @author Santiago Caicedo
  */
 package co.edu.unicauca.saberpro.question.application;
 
-import co.edu.unicauca.saberpro.question.application.dto.CreateQuestionCommand;
-import co.edu.unicauca.saberpro.question.application.dto.SubmissionReceipt;
-import co.edu.unicauca.saberpro.question.application.dto.SubmitQuestionForReview;
 import co.edu.unicauca.saberpro.question.application.exception.ValidationRejectedException;
 import co.edu.unicauca.saberpro.question.application.port.JustificationValidator;
-import co.edu.unicauca.saberpro.question.application.port.ReviewCommandPublisher;
 import co.edu.unicauca.saberpro.question.domain.builder.IQuestionBuilder;
 import co.edu.unicauca.saberpro.question.domain.exception.QuestionNotFoundException;
 import co.edu.unicauca.saberpro.question.domain.model.Question;
 import co.edu.unicauca.saberpro.question.domain.model.QuestionStatus;
-import co.edu.unicauca.saberpro.question.domain.port.QuestionRepository;
+import co.edu.unicauca.saberpro.question.domain.ports.inbound.CrearPreguntaCommand;
+import co.edu.unicauca.saberpro.question.domain.ports.inbound.CrearPreguntaUseCase;
+import co.edu.unicauca.saberpro.question.domain.ports.inbound.EvaluarPreguntaUseCase;
+import co.edu.unicauca.saberpro.question.domain.ports.outbound.NotificacionPort;
+import co.edu.unicauca.saberpro.question.domain.ports.outbound.PreguntaRepositoryPort;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,49 +25,54 @@ import java.util.function.Supplier;
 /**
  * @brief Orquesta Builder, validación remota, persistencia y mensajería.
  *
- * Java puro: depende solo de puertos (interfaces). Spring lo registra como
- * bean en {@code ApplicationConfig}.
+ * Java puro: depende solo de puertos (interfaces) del dominio. Implementa los
+ * puertos de entrada {@link CrearPreguntaUseCase} y {@link EvaluarPreguntaUseCase}.
+ * Spring lo registra como bean en {@code ApplicationConfig}.
  */
-public class QuestionService {
+public class QuestionService implements CrearPreguntaUseCase, EvaluarPreguntaUseCase {
 
     private final Supplier<IQuestionBuilder> builderFactory;
     private final JustificationValidator validator;
-    private final QuestionRepository repository;
-    private final ReviewCommandPublisher publisher;
+    private final PreguntaRepositoryPort repository;
+    private final NotificacionPort notificacionPort;
 
     /**
      * @brief Inyecta las dependencias.
-     * @param builderFactory Crea un builder nuevo por cada pregunta.
-     * @param validator      Cliente de Validation Service.
-     * @param repository     Persistencia de preguntas.
-     * @param publisher      Publicador AMQP.
+     * @param builderFactory   Crea un builder nuevo por cada pregunta.
+     * @param validator        Cliente de Validation Service.
+     * @param repository       Puerto de persistencia de preguntas.
+     * @param notificacionPort Puerto de notificación (RabbitMQ).
      */
     public QuestionService(Supplier<IQuestionBuilder> builderFactory, JustificationValidator validator,
-                           QuestionRepository repository, ReviewCommandPublisher publisher) {
+                           PreguntaRepositoryPort repository, NotificacionPort notificacionPort) {
         this.builderFactory = builderFactory;
         this.validator = validator;
         this.repository = repository;
-        this.publisher = publisher;
+        this.notificacionPort = notificacionPort;
     }
 
     /**
      * @brief Crea una pregunta (Punto 2.1).
      *
-     * Pasos: 1) el Builder valida la estructura; 2) se llama de forma
-     * síncrona a Validation Service; 3) solo si es válida se guarda en DRAFT.
+     * Pasos: 1) el Builder y los Objetos de Valor validan la estructura y la
+     * justificación; 2) se llama de forma síncrona a Validation Service; 3) solo
+     * si es válida se guarda en DRAFT.
      *
      * @param command Datos de la pregunta.
      * @return Pregunta guardada con id.
+     * @throws co.edu.unicauca.saberpro.question.domain.exception.ReglaNegocioException
+     *         si el enunciado o la justificación violan una invariante de dominio.
      * @throws co.edu.unicauca.saberpro.question.domain.exception.InvalidQuestionException
      *         si la estructura es inválida.
      * @throws ValidationRejectedException si la justificación es rechazada.
      */
-    public Question create(CreateQuestionCommand command) {
+    @Override
+    public Question crearPregunta(CrearPreguntaCommand command) {
         IQuestionBuilder builder = builderFactory.get()
                 .withStatement(command.statement())
                 .withJustification(command.justification())
                 .withCorrectAnswer(command.correctAnswer());
-        List<CreateQuestionCommand.OptionData> options =
+        List<CrearPreguntaCommand.OptionData> options =
                 command.options() == null ? List.of() : command.options();
         options.forEach(o -> builder.withOption(o.label(), o.text()));
         Question draft = builder.build();
@@ -80,20 +85,21 @@ public class QuestionService {
     }
 
     /**
-     * @brief Envía una pregunta a revisión de forma asíncrona (Punto 2.2).
+     * @brief Envía una pregunta a evaluación (revisión) de forma asíncrona (Punto 2.2).
      *
-     * Publica el comando y retorna enseguida; Lifecycle Service hace la
+     * Notifica la solicitud y retorna enseguida; Lifecycle Service hace la
      * transición cuando consume el mensaje.
      *
      * @param questionId Pregunta a enviar.
-     * @return Comprobante con el operationId.
+     * @return El operationId de la solicitud.
      * @throws QuestionNotFoundException si la pregunta no existe.
      */
-    public SubmissionReceipt submitForReview(Long questionId) {
+    @Override
+    public String enviarAEvaluacion(Long questionId) {
         Question question = getById(questionId);
         String operationId = UUID.randomUUID().toString();
-        publisher.publish(new SubmitQuestionForReview(operationId, question.getId(), Instant.now()));
-        return new SubmissionReceipt(operationId, question.getId());
+        notificacionPort.notificarRevision(operationId, question.getId(), Instant.now());
+        return operationId;
     }
 
     /**

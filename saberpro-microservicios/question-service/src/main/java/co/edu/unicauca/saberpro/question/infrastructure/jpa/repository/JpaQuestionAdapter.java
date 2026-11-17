@@ -1,30 +1,27 @@
 /**
- * @file QuestionRepositoryJpaImpl.java
- * @brief Adaptador que implementa el puerto QuestionRepository con JPA + H2.
+ * @file JpaQuestionAdapter.java
+ * @brief Adaptador de salida (Driven / Outbound) con Spring Data JPA y H2.
  * @author Santiago Caicedo
  */
 package co.edu.unicauca.saberpro.question.infrastructure.jpa.repository;
 
 import co.edu.unicauca.saberpro.question.domain.model.Question;
-import co.edu.unicauca.saberpro.question.domain.port.QuestionRepository;
+import co.edu.unicauca.saberpro.question.domain.ports.outbound.PreguntaRepositoryPort;
 import co.edu.unicauca.saberpro.question.infrastructure.jpa.mapper.QuestionDomainMapper;
 import co.edu.unicauca.saberpro.question.infrastructure.jpa.record.QuestionRecord;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
- * @brief Une el dominio con Spring Data (Punto 3.3).
+ * @brief Adaptador de salida que implementa {@link PreguntaRepositoryPort}
+ *        conectando el dominio con H2 mediante Spring Data JPA.
  *
- * Recibe objetos de dominio, los convierte con {@link QuestionDomainMapper}
- * y los persiste con {@link SpringQuestionDataRepository}. Los métodos de
- * lectura son transaccionales para que el mapeo pueda recorrer las opciones
- * (relación LAZY) dentro de la sesión.
+ * No lleva anotación de estereotipo: lo construye {@code RepositoryAdapterConfig}
+ * como {@code @Bean} para poder intercambiarlo con el adaptador en memoria.
  */
-@Repository
-public class QuestionRepositoryJpaImpl implements QuestionRepository {
+public class JpaQuestionAdapter implements PreguntaRepositoryPort {
 
     private final SpringQuestionDataRepository dataRepository;
     private final QuestionDomainMapper mapper;
@@ -34,7 +31,7 @@ public class QuestionRepositoryJpaImpl implements QuestionRepository {
      * @param dataRepository Repositorio JPA generado por Spring.
      * @param mapper         Mapeador dominio ↔ JPA.
      */
-    public QuestionRepositoryJpaImpl(SpringQuestionDataRepository dataRepository, QuestionDomainMapper mapper) {
+    public JpaQuestionAdapter(SpringQuestionDataRepository dataRepository, QuestionDomainMapper mapper) {
         this.dataRepository = dataRepository;
         this.mapper = mapper;
     }

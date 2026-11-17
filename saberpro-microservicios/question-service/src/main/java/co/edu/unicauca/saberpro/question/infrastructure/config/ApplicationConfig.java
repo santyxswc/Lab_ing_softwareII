@@ -7,9 +7,9 @@ package co.edu.unicauca.saberpro.question.infrastructure.config;
 
 import co.edu.unicauca.saberpro.question.application.QuestionService;
 import co.edu.unicauca.saberpro.question.application.port.JustificationValidator;
-import co.edu.unicauca.saberpro.question.application.port.ReviewCommandPublisher;
 import co.edu.unicauca.saberpro.question.domain.builder.QuestionBuilder;
-import co.edu.unicauca.saberpro.question.domain.port.QuestionRepository;
+import co.edu.unicauca.saberpro.question.domain.ports.outbound.NotificacionPort;
+import co.edu.unicauca.saberpro.question.domain.ports.outbound.PreguntaRepositoryPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,15 +23,15 @@ public class ApplicationConfig {
 
     /**
      * @brief Crea el servicio de preguntas.
-     * @param validator  Adaptador REST hacia Validation Service.
-     * @param repository Adaptador JPA.
-     * @param publisher  Adaptador RabbitMQ.
+     * @param validator        Adaptador REST hacia Validation Service.
+     * @param repository       Adaptador de persistencia (JPA o memoria).
+     * @param notificacionPort Adaptador RabbitMQ.
      * @return Caso de uso listo para el controlador.
      */
     @Bean
     public QuestionService questionService(JustificationValidator validator,
-                                           QuestionRepository repository,
-                                           ReviewCommandPublisher publisher) {
-        return new QuestionService(QuestionBuilder::new, validator, repository, publisher);
+                                           PreguntaRepositoryPort repository,
+                                           NotificacionPort notificacionPort) {
+        return new QuestionService(QuestionBuilder::new, validator, repository, notificacionPort);
     }
 }

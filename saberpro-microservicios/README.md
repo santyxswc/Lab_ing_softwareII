@@ -1,20 +1,21 @@
-# Banco de Preguntas Saber PRO — Parcial 2 (Corte II)
+# Banco de Preguntas Saber PRO — Taller 13: Entrega Final Integradora (Fase II)
 
 **Laboratorio de Ingeniería de Software II — Universidad del Cauca — 2026.2**
 
 **Autor:** Santiago Caicedo · [Ver evidencias de ejecución](#9-evidencias-de-ejecución)
 
-Tres microservicios Spring Boot que cubren los tres puntos del parcial:
+Tres microservicios Spring Boot **contenerizados con Docker** y **orquestados con Docker Compose**. El `question-service` aplica **DDD** y **Arquitectura Hexagonal (Puertos y Adaptadores)** con dominio Java puro. Cubren los tres puntos del parcial:
 
 | Punto | Tema | Dónde está |
 |---|---|---|
 | **1.1** Builder | `IQuestionBuilder`, `QuestionBuilder` | `question-service/.../domain/builder/` |
 | **1.2** State (sin `if`/`switch`) | `IQuestionState`, `DraftState`, `PendingReviewState` | `lifecycle-service/.../domain/state/` |
 | **2.1** REST síncrono | `ValidationServiceRestClient` (RestTemplate) → `POST /validate` | `question-service/.../infrastructure/client/` |
-| **2.2** AMQP asíncrono | `RabbitReviewCommandPublisher` → `SubmitQuestionForReviewListener` (`@RabbitListener`) | `question-service/.../messaging/`, `lifecycle-service/.../messaging/` |
-| **3.1** Dominio puro | `Question` (sin `@Entity`/`@Table`/`@Id`) | `question-service/.../domain/model/` |
+| **2.2** AMQP asíncrono | `RabbitMQPublisher` → `QuestionStatusChangedListener` (`@RabbitListener`) | `question-service/.../infrastructure/messaging/`, `lifecycle-service/.../messaging/` |
+| **3.1** Dominio puro | `Question` (agregado, sin `@Entity`/`@Table`/`@Id`) + VO `Enunciado`, `Justificacion` | `question-service/.../domain/model/` |
 | **3.2** `@Entity` + `@OneToMany(cascade = ALL)` | `QuestionRecord` → `AnswerOptionRecord` | `question-service/.../infrastructure/jpa/record/` |
-| **3.3** Mapper + repositorio H2 | `QuestionDomainMapper`, `QuestionRepositoryJpaImpl`, `SpringQuestionDataRepository` | `question-service/.../infrastructure/jpa/` |
+| **3.3** Mapper + repositorio H2 | `QuestionDomainMapper`, `JpaQuestionAdapter`, `SpringQuestionDataRepository` | `question-service/.../infrastructure/jpa/` |
+| **Taller 13** Hexagonal | Puertos `domain/ports/{inbound,outbound}` + adaptadores intercambiables (`JpaQuestionAdapter` / `InMemoryQuestionAdapter`) | `question-service/.../domain/ports/`, `.../infrastructure/persistence/memory/` |
 
 ---
 
@@ -53,30 +54,51 @@ Ambos servicios declaran la misma topología (es idempotente), así que no impor
 
 El enunciado (2.2) dice que **Lifecycle Service** "efectúa la transición a PENDING_REVIEW". Por eso el patrón State vive allí. Cada microservicio tiene su propia base de datos, así que después de la transición Lifecycle Service publica `QuestionStatusChanged` y Question Service actualiza su copia del estado. Así `GET /questions/{id}` muestra `PENDING_REVIEW` sin compartir la base de datos.
 
-### Capas (arquitectura limpia / hexagonal) — Question Service
+### Capas (Arquitectura Hexagonal / DDD) — Question Service
 
 ```
 co.edu.unicauca.saberpro.question
-├── domain                      ← Java puro, sin Spring ni JPA
-│   ├── model                   Question, AnswerOption, QuestionStatus
-│   ├── builder                 IQuestionBuilder, QuestionBuilder          (Punto 1.1)
-│   ├── exception               DomainException, InvalidQuestionException, QuestionNotFoundException
-│   └── port                    QuestionRepository (puerto de salida)
-├── application                 ← casos de uso, Java puro
-│   ├── QuestionService
-│   ├── dto                     CreateQuestionCommand, SubmitQuestionForReview, SubmissionReceipt
-│   ├── port                    JustificationValidator, ReviewCommandPublisher
-│   └── exception               ValidationRejectedException, ValidationServiceUnavailableException
-└── infrastructure              ← adaptadores (Spring)
-    ├── rest                    QuestionController, RestExceptionHandler, dto/
-    ├── client                  ValidationServiceRestClient (RestTemplate)  (Punto 2.1)
-    ├── messaging               RabbitReviewCommandPublisher, QuestionStatusChangedListener (Punto 2.2)
+├── domain                          ← Java puro, sin Spring ni JPA
+│   ├── model                       Question (agregado), AnswerOption, QuestionStatus,
+│   │                               Enunciado y Justificacion (Value Objects)
+│   ├── builder                     IQuestionBuilder, QuestionBuilder            (Punto 1.1)
+│   ├── exception                   DomainException, InvalidQuestionException,
+│   │                               QuestionNotFoundException, ReglaNegocioException
+│   └── ports
+│       ├── inbound                 CrearPreguntaUseCase, EvaluarPreguntaUseCase,
+│       │                           CrearPreguntaCommand   (puertos de entrada / driving)
+│       └── outbound                PreguntaRepositoryPort, NotificacionPort
+│                                   (puertos de salida / driven)
+├── application                     ← casos de uso, Java puro
+│   ├── QuestionService             implementa CrearPreguntaUseCase y EvaluarPreguntaUseCase
+│   ├── dto                         SubmitQuestionForReview
+│   ├── port                        JustificationValidator (hacia Validation Service, Punto 2.1)
+│   └── exception                   ValidationRejectedException, ValidationServiceUnavailableException
+└── infrastructure                  ← adaptadores (Spring)
+    ├── rest                        QuestionRestController, RestExceptionHandler, dto/  (entrada)
+    ├── client                      ValidationServiceRestClient (RestTemplate)          (Punto 2.1)
+    ├── messaging                   RabbitMQPublisher, QuestionStatusChangedListener   (Punto 2.2)
     ├── jpa
-    │   ├── record              QuestionRecord, AnswerOptionRecord (@Entity) (Punto 3.2)
-    │   ├── mapper              QuestionDomainMapper                        (Punto 3.3)
-    │   └── repository          SpringQuestionDataRepository, QuestionRepositoryJpaImpl (Punto 3.3)
-    └── config                  ApplicationConfig, RabbitConfig, RestClientConfig, MessagingTopology
+    │   ├── record                  QuestionRecord, AnswerOptionRecord (@Entity)        (Punto 3.2)
+    │   ├── mapper                  QuestionDomainMapper                                (Punto 3.3)
+    │   └── repository              SpringQuestionDataRepository, JpaQuestionAdapter    (Punto 3.3)
+    ├── persistence
+    │   └── memory                  InMemoryQuestionAdapter (ConcurrentHashMap)
+    └── config                      ApplicationConfig, RepositoryAdapterConfig,
+                                    RabbitConfig, RestClientConfig, MessagingTopology
 ```
+
+#### Puertos (Arquitectura Hexagonal)
+
+| Dirección | Puerto | Quién lo implementa / lo usa |
+|---|---|---|
+| Entrada (inbound / driving) | `CrearPreguntaUseCase` | Lo invoca `QuestionRestController`; lo implementa `QuestionService` |
+| Entrada (inbound / driving) | `EvaluarPreguntaUseCase` | Lo invoca `QuestionRestController`; lo implementa `QuestionService` |
+| Salida (outbound / driven) | `PreguntaRepositoryPort` | `JpaQuestionAdapter` (JPA + H2) **o** `InMemoryQuestionAdapter` |
+| Salida (outbound / driven) | `NotificacionPort` | `RabbitMQPublisher` (RabbitMQ) |
+| Salida (outbound / driven) | `JustificationValidator` | `ValidationServiceRestClient` (RestTemplate) |
+
+Los adaptadores de salida de persistencia son **intercambiables sin tocar el dominio**: la propiedad `saberpro.repository.adapter` (`jpa` por defecto, o `memory`) decide cuál `@Bean` registra `RepositoryAdapterConfig` (`@ConditionalOnProperty`).
 
 Lifecycle Service sigue la misma organización (`domain/state` contiene el patrón State).
 
@@ -196,8 +218,8 @@ classDiagram
     class Question {
       <<domain - Java puro>>
       -Long id
-      -String statement
-      -String justification
+      -Enunciado enunciado
+      -Justificacion justificacion
       -List~AnswerOption~ options
       -QuestionStatus status
     }
@@ -214,22 +236,24 @@ classDiagram
       +toRecord(Question) QuestionRecord
       +toDomain(QuestionRecord) Question
     }
-    class QuestionRepository { <<interface / puerto>> }
-    class QuestionRepositoryJpaImpl
+    class PreguntaRepositoryPort { <<interface / puerto de salida>> }
+    class JpaQuestionAdapter
+    class InMemoryQuestionAdapter
     class SpringQuestionDataRepository { <<JpaRepository>> }
 
     QuestionRecord "1" --> "4" AnswerOptionRecord
-    QuestionRepositoryJpaImpl ..|> QuestionRepository
-    QuestionRepositoryJpaImpl --> SpringQuestionDataRepository
-    QuestionRepositoryJpaImpl --> QuestionDomainMapper
+    JpaQuestionAdapter ..|> PreguntaRepositoryPort
+    InMemoryQuestionAdapter ..|> PreguntaRepositoryPort
+    JpaQuestionAdapter --> SpringQuestionDataRepository
+    JpaQuestionAdapter --> QuestionDomainMapper
     QuestionDomainMapper ..> Question
     QuestionDomainMapper ..> QuestionRecord
 ```
 
-- `Question` (dominio) **no** tiene anotaciones JPA.
+- `Question` (dominio) **no** tiene anotaciones JPA; enunciado y justificación son Value Objects (`Enunciado`, `Justificacion`) que validan sus invariantes en el constructor.
 - `QuestionRecord` tiene `@OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)`: guardar la pregunta guarda sus 4 opciones.
 - `QuestionDomainMapper` convierte en ambos sentidos y arma la relación bidireccional (`addOption` asigna `option.question`).
-- `QuestionRepositoryJpaImpl` implementa el puerto del dominio inyectando `SpringQuestionDataRepository`.
+- `JpaQuestionAdapter` implementa `PreguntaRepositoryPort` inyectando `SpringQuestionDataRepository`; `InMemoryQuestionAdapter` implementa el mismo puerto con un `ConcurrentHashMap`. Ambos se seleccionan con `saberpro.repository.adapter`.
 - Base de datos H2 **en archivo**: `data/questiondb.mv.db` (y `data/lifecycledb.mv.db` para Lifecycle Service). Los datos sobreviven a los reinicios. La carpeta `data/` está en `.gitignore`; para empezar de cero se borra con `rm -rf data/` con los servicios apagados.
 - Consola: <http://localhost:8083/h2-console> (JDBC URL `jdbc:h2:file:./data/questiondb`, usuario `sa`, sin contraseña).
 
@@ -240,13 +264,45 @@ classDiagram
 ### Requisitos
 - **Java 21** (en este equipo: `/usr/lib/jvm/java-21-openjdk`)
 - **Maven 3.9+**
-- **RabbitMQ** en `localhost:5672` (guest/guest)
+- **Docker + Docker Compose** (para la ejecución contenerizada del Taller 13) o **RabbitMQ** en `localhost:5672` (guest/guest) si se corre localmente.
 
-### 5.1 Levantar RabbitMQ
+### 5.1 Todo con Docker Compose (Taller 13)
 
-Con Docker:
+Cada microservicio trae su propio `Dockerfile` (base `eclipse-temurin:21-jdk-alpine`, copia `target/*.jar` y arranca con `ENTRYPOINT ["java","-jar","app.jar"]`). El `docker-compose.yml` de la raíz construye las 3 imágenes y levanta los 4 contenedores sobre la red **bridge `saberpro-net`**:
+
+| Servicio Compose | Contenedor | Imagen / build | Puerto(s) |
+|---|---|---|---|
+| `rabbitmq` | `saberpro-rabbitmq` | `rabbitmq:3-management` | 5672 (AMQP), 15672 (consola) |
+| `validation-service` | `saberpro-validation-service` | `build: ./validation-service` | 8082 |
+| `question-service` | `saberpro-question-service` | `build: ./question-service` | 8083 |
+| `lifecycle-service` | `saberpro-lifecycle-service` | `build: ./lifecycle-service` | 8084 |
+
 ```bash
-docker compose up -d
+cd saberpro-microservicios
+
+# 1) Generar los .jar en cada target/ (los Dockerfiles los copian)
+mvn clean package -DskipTests
+
+# 2) Construir las imágenes y levantar todo en segundo plano
+docker compose up --build -d
+
+# 3) Ver el estado y los logs
+docker compose ps
+docker compose logs -f question-service
+
+# 4) Detener y eliminar los contenedores (las imágenes y volúmenes se conservan)
+docker compose down
+```
+
+Dentro de la red, `question-service` recibe por variables de entorno `SPRING_RABBITMQ_HOST=rabbitmq` y `SERVICES_VALIDATION_URL=http://validation-service:8082`: los contenedores se resuelven por **nombre de servicio** (DNS interno de Docker), no por `localhost`. El `depends_on` garantiza que `question-service` arranque después de `rabbitmq` y `validation-service`, y `lifecycle-service` después de `rabbitmq`.
+
+Consola de RabbitMQ: <http://localhost:15672> (guest / guest).
+
+### 5.2 Levantar solo RabbitMQ (modo local)
+
+Para correr los servicios con `spring-boot:run` / `java -jar` en el host:
+```bash
+docker compose up -d rabbitmq
 ```
 Sin Docker (Arch Linux):
 ```bash
@@ -254,16 +310,15 @@ sudo pacman -S rabbitmq
 sudo rabbitmq-plugins enable rabbitmq_management
 sudo systemctl start rabbitmq
 ```
-Consola: <http://localhost:15672> (guest / guest).
 
-### 5.2 Compilar y probar
+### 5.3 Compilar y probar
 ```bash
 cd saberpro-microservicios
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk   # si java por defecto no es la 21
 mvn clean install
 ```
 
-### 5.3 Arrancar los servicios (una terminal por servicio)
+### 5.4 Arrancar los servicios (una terminal por servicio)
 
 > Ejecutar **desde la carpeta `saberpro-microservicios`**: la base H2 se guarda en `./data/` relativo al directorio de trabajo.
 
@@ -279,7 +334,7 @@ java -jar question-service/target/question-service-1.0.0.jar
 java -jar lifecycle-service/target/lifecycle-service-1.0.0.jar
 ```
 
-### 5.4 Datos de ejemplo
+### 5.5 Datos de ejemplo
 Con los tres servicios arriba:
 ```bash
 ./scripts/seed.sh
@@ -334,7 +389,7 @@ En <http://localhost:15672>:
 | `QuestionBuilderTest` | 4 opciones exactas, respuesta correcta existente, letras únicas, todos los errores juntos. |
 | `QuestionServiceTest` | Guarda solo si la validación pasa; submit publica el comando; 404 no publica. |
 | `QuestionControllerTest` | Códigos HTTP 201 / 400 / 202 / 404. |
-| `QuestionRepositoryJpaImplTest` | Cascada en H2, actualización sin duplicar opciones, mapeador ida y vuelta. |
+| `QuestionRepositoryJpaImplTest` → `JpaQuestionAdapterTest` | Cascada en H2, actualización sin duplicar opciones, mapeador ida y vuelta. |
 | `QuestionStateTest` | Draft → PendingReview; segundo envío rechazado; reconstrucción del estado. |
 | `LifecycleServiceTest` | APPLIED, REJECTED e idempotencia por `operationId`. |
 

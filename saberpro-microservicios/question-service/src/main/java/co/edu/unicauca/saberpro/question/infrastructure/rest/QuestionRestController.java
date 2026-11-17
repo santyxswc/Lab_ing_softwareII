@@ -1,12 +1,11 @@
 /**
- * @file QuestionController.java
- * @brief Endpoints REST de Question Service.
+ * @file QuestionRestController.java
+ * @brief Adaptador de entrada (Driving / Inbound) HTTP de Question Service.
  * @author Santiago Caicedo
  */
 package co.edu.unicauca.saberpro.question.infrastructure.rest;
 
 import co.edu.unicauca.saberpro.question.application.QuestionService;
-import co.edu.unicauca.saberpro.question.application.dto.SubmissionReceipt;
 import co.edu.unicauca.saberpro.question.domain.model.Question;
 import co.edu.unicauca.saberpro.question.infrastructure.rest.dto.CreateQuestionRequest;
 import co.edu.unicauca.saberpro.question.infrastructure.rest.dto.QuestionResponse;
@@ -24,7 +23,7 @@ import java.net.URI;
 import java.util.List;
 
 /**
- * @brief Adaptador HTTP de entrada.
+ * @brief Adaptador REST de entrada.
  *
  * <ul>
  *   <li>{@code POST /questions} → 201 Created (o 400 si la validación falla).</li>
@@ -35,7 +34,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/questions")
-public class QuestionController {
+public class QuestionRestController {
 
     private final QuestionService service;
 
@@ -43,7 +42,7 @@ public class QuestionController {
      * @brief Inyecta el caso de uso.
      * @param service Servicio de preguntas.
      */
-    public QuestionController(QuestionService service) {
+    public QuestionRestController(QuestionService service) {
         this.service = service;
     }
 
@@ -54,22 +53,21 @@ public class QuestionController {
      */
     @PostMapping
     public ResponseEntity<QuestionResponse> create(@RequestBody CreateQuestionRequest request) {
-        Question saved = service.create(request.toCommand());
+        Question saved = service.crearPregunta(request.toCommand());
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}").buildAndExpand(saved.getId()).toUri();
         return ResponseEntity.created(location).body(QuestionResponse.from(saved));
     }
 
     /**
-     * @brief Envía una pregunta a revisión de forma asíncrona (Punto 2.2).
+     * @brief Envía una pregunta a evaluación (revisión) de forma asíncrona (Punto 2.2).
      * @param id Pregunta a enviar.
      * @return 202 Accepted con el operationId.
      */
     @PostMapping("/{id}/submit")
     public ResponseEntity<SubmitAcceptedResponse> submit(@PathVariable Long id) {
-        SubmissionReceipt receipt = service.submitForReview(id);
-        return ResponseEntity.accepted().body(new SubmitAcceptedResponse(
-                receipt.operationId(), receipt.questionId(),
+        String operationId = service.enviarAEvaluacion(id);
+        return ResponseEntity.accepted().body(new SubmitAcceptedResponse(operationId, id,
                 "Solicitud de revisión encolada. Lifecycle Service la procesará."));
     }
 

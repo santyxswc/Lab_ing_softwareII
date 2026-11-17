@@ -9,6 +9,7 @@ import co.edu.unicauca.saberpro.question.application.exception.ValidationRejecte
 import co.edu.unicauca.saberpro.question.application.exception.ValidationServiceUnavailableException;
 import co.edu.unicauca.saberpro.question.domain.exception.InvalidQuestionException;
 import co.edu.unicauca.saberpro.question.domain.exception.QuestionNotFoundException;
+import co.edu.unicauca.saberpro.question.domain.exception.ReglaNegocioException;
 import co.edu.unicauca.saberpro.question.infrastructure.rest.dto.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,16 @@ public class RestExceptionHandler {
     @ExceptionHandler(InvalidQuestionException.class)
     public ResponseEntity<ErrorResponse> handleInvalid(InvalidQuestionException e) {
         return build(HttpStatus.BAD_REQUEST, "La estructura de la pregunta no es válida.", e.getErrors());
+    }
+
+    /**
+     * @brief Invariante de dominio rota (Objetos de Valor).
+     * @param e Excepción.
+     * @return 400.
+     */
+    @ExceptionHandler(ReglaNegocioException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessRule(ReglaNegocioException e) {
+        return build(HttpStatus.BAD_REQUEST, e.getMessage(), List.of());
     }
 
     /**

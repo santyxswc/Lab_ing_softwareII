@@ -37,3 +37,12 @@ spring:
 services:
   validation:
     url: http://localhost:8082
+
+# ==============================================================================
+# Selección del Adaptador de Salida de Persistencia (Taller 13)
+#   - 'jpa'    -> JpaQuestionAdapter (Spring Data JPA + H2) [por defecto]
+#   - 'memory' -> InMemoryQuestionAdapter (ConcurrentHashMap en memoria)
+# ==============================================================================
+saberpro:
+  repository:
+    adapter: jpa

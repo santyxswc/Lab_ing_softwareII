@@ -6,7 +6,6 @@
 package co.edu.unicauca.saberpro.question.infrastructure.rest;
 
 import co.edu.unicauca.saberpro.question.application.QuestionService;
-import co.edu.unicauca.saberpro.question.application.dto.SubmissionReceipt;
 import co.edu.unicauca.saberpro.question.application.exception.ValidationRejectedException;
 import co.edu.unicauca.saberpro.question.domain.builder.QuestionBuilder;
 import co.edu.unicauca.saberpro.question.domain.exception.QuestionNotFoundException;
@@ -31,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @brief Prueba solo la capa web; el caso de uso es un mock.
  */
-@WebMvcTest(QuestionController.class)
+@WebMvcTest(QuestionRestController.class)
 class QuestionControllerTest {
 
     private static final String BODY = """
@@ -59,7 +58,7 @@ class QuestionControllerTest {
     /** @brief Creación exitosa → 201 con Location y estado DRAFT. */
     @Test
     void createReturns201() throws Exception {
-        when(service.create(any())).thenReturn(saved());
+        when(service.crearPregunta(any())).thenReturn(saved());
         mvc.perform(post("/questions").contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "http://localhost/questions/1"))
@@ -70,16 +69,16 @@ class QuestionControllerTest {
     /** @brief Justificación rechazada → 400. */
     @Test
     void createReturns400WhenRejected() throws Exception {
-        when(service.create(any())).thenThrow(new ValidationRejectedException("muy corta"));
+        when(service.crearPregunta(any())).thenThrow(new ValidationRejectedException("muy corta"));
         mvc.perform(post("/questions").contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("muy corta"));
     }
 
-    /** @brief Envío a revisión → 202 con operationId. */
+    /** @brief Envío a evaluación → 202 con operationId. */
     @Test
     void submitReturns202() throws Exception {
-        when(service.submitForReview(1L)).thenReturn(new SubmissionReceipt("op-123", 1L));
+        when(service.enviarAEvaluacion(1L)).thenReturn("op-123");
         mvc.perform(post("/questions/1/submit"))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.operationId").value("op-123"));
@@ -88,7 +87,7 @@ class QuestionControllerTest {
     /** @brief Pregunta inexistente → 404. */
     @Test
     void submitReturns404() throws Exception {
-        when(service.submitForReview(9L)).thenThrow(new QuestionNotFoundException(9L));
+        when(service.enviarAEvaluacion(9L)).thenThrow(new QuestionNotFoundException(9L));
         mvc.perform(post("/questions/9/submit")).andExpect(status().isNotFound());
     }
 }

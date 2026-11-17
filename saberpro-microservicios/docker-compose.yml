@@ -1,13 +1,73 @@
 # @file docker-compose.yml
-# @brief Levanta RabbitMQ con la consola de administración.
+# @brief Orquesta RabbitMQ y los tres microservicios sobre una red bridge.
 # @author Santiago Caicedo
 #
-# Uso: docker compose up -d
-# Consola: http://localhost:15672 (guest / guest)
+# Uso:
+#   1) Compilar los .jar:  mvn clean package -DskipTests
+#   2) Levantar todo:      docker compose up --build -d
+#   3) Consola RabbitMQ:   http://localhost:15672 (guest / guest)
 services:
+
+  # ---------------------------------------------------------------------------
+  # Broker de mensajería (Punto 2.2)
+  # ---------------------------------------------------------------------------
   rabbitmq:
-    image: rabbitmq:4-management
+    image: rabbitmq:3-management
     container_name: saberpro-rabbitmq
     ports:
-      - "5672:5672"     # AMQP (lo usan los microservicios)
-      - "15672:15672"   # Consola web
+      - "5672:5672"     # AMQP (lo consumen los microservicios)
+      - "15672:15672"   # Consola web de administración
+    networks:
+      - saberpro-net
+
+  # ---------------------------------------------------------------------------
+  # Validation Service (:8082): valida la justificación de un reactivo
+  # ---------------------------------------------------------------------------
+  validation-service:
+    build: ./validation-service
+    container_name: saberpro-validation-service
+    ports:
+      - "8082:8082"
+    networks:
+      - saberpro-net
+
+  # ---------------------------------------------------------------------------
+  # Question Service (:8083): creación (Builder), persistencia y envío a revisión
+  # ---------------------------------------------------------------------------
+  question-service:
+    build: ./question-service
+    container_name: saberpro-question-service
+    ports:
+      - "8083:8083"
+    environment:
+      # Host del broker dentro de la red de Docker.
+      SPRING_RABBITMQ_HOST: rabbitmq
+      # URL de Validation Service por el nombre de servicio (DNS interno).
+      SERVICES_VALIDATION_URL: http://validation-service:8082
+    depends_on:
+      - rabbitmq
+      - validation-service
+    networks:
+      - saberpro-net
+
+  # ---------------------------------------------------------------------------
+  # Lifecycle Service (:8084): consume SubmitQuestionForReview (patrón State)
+  # ---------------------------------------------------------------------------
+  lifecycle-service:
+    build: ./lifecycle-service
+    container_name: saberpro-lifecycle-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - rabbitmq
+    networks:
+      - saberpro-net
+
+# -----------------------------------------------------------------------------
+# Red bridge común: los contenedores se resuelven por nombre de servicio.
+# -----------------------------------------------------------------------------
+networks:
+  saberpro-net:
+    driver: bridge

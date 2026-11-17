@@ -5,7 +5,7 @@
  */
 package co.edu.unicauca.saberpro.question.infrastructure.rest.dto;
 
-import co.edu.unicauca.saberpro.question.application.dto.CreateQuestionCommand;
+import co.edu.unicauca.saberpro.question.domain.ports.inbound.CrearPreguntaCommand;
 
 import java.util.List;
 
@@ -35,9 +35,9 @@ public record CreateQuestionRequest(String statement, String justification,
      * @brief Convierte el DTO HTTP en comando de aplicación.
      * @return Comando para {@code QuestionService.create}.
      */
-    public CreateQuestionCommand toCommand() {
-        List<CreateQuestionCommand.OptionData> data = options == null ? null
-                : options.stream().map(o -> new CreateQuestionCommand.OptionData(o.label(), o.text())).toList();
-        return new CreateQuestionCommand(statement, justification, data, correctAnswer);
+    public CrearPreguntaCommand toCommand() {
+        List<CrearPreguntaCommand.OptionData> data = options == null ? null
+                : options.stream().map(o -> new CrearPreguntaCommand.OptionData(o.label(), o.text())).toList();
+        return new CrearPreguntaCommand(statement, justification, data, correctAnswer);
     }
 }

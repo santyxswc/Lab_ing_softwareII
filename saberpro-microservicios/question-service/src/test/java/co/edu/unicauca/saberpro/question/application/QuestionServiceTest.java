@@ -5,8 +5,6 @@
  */
 package co.edu.unicauca.saberpro.question.application;
 
-import co.edu.unicauca.saberpro.question.application.dto.CreateQuestionCommand;
-import co.edu.unicauca.saberpro.question.application.dto.SubmissionReceipt;
 import co.edu.unicauca.saberpro.question.application.dto.SubmitQuestionForReview;
 import co.edu.unicauca.saberpro.question.application.exception.ValidationRejectedException;
 import co.edu.unicauca.saberpro.question.application.port.JustificationValidator;
@@ -14,7 +12,9 @@ import co.edu.unicauca.saberpro.question.domain.builder.QuestionBuilder;
 import co.edu.unicauca.saberpro.question.domain.exception.QuestionNotFoundException;
 import co.edu.unicauca.saberpro.question.domain.model.Question;
 import co.edu.unicauca.saberpro.question.domain.model.QuestionStatus;
-import co.edu.unicauca.saberpro.question.domain.port.QuestionRepository;
+import co.edu.unicauca.saberpro.question.domain.ports.inbound.CrearPreguntaCommand;
+import co.edu.unicauca.saberpro.question.domain.ports.outbound.NotificacionPort;
+import co.edu.unicauca.saberpro.question.domain.ports.outbound.PreguntaRepositoryPort;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -29,12 +29,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * @brief Verifica el flujo crear / enviar a revisión sin Spring ni red.
+ * @brief Verifica el flujo crear / enviar a evaluación sin Spring ni red.
  */
 class QuestionServiceTest {
 
-    /** @brief Repositorio en memoria que asigna ids incrementales. */
-    static class InMemoryRepository implements QuestionRepository {
+    /** @brief Adaptador de persistencia en memoria que asigna ids incrementales. */
+    static class InMemoryRepository implements PreguntaRepositoryPort {
         final Map<Long, Question> data = new HashMap<>();
         long seq = 0;
 
@@ -60,24 +60,30 @@ class QuestionServiceTest {
 
     private final InMemoryRepository repository = new InMemoryRepository();
     private final List<SubmitQuestionForReview> published = new ArrayList<>();
-    private final JustificationValidator lengthValidator =
-            j -> new JustificationValidator.Outcome(j.length() > 15, "regla de prueba");
+    /** Doble de prueba del puerto de salida NotificacionPort (RabbitMQ). */
+    private final NotificacionPort notificacionPort =
+            (operationId, questionId, solicitadoEn) ->
+                    published.add(new SubmitQuestionForReview(operationId, questionId, solicitadoEn));
+    /** Doble de prueba de Validation Service: rechaza justificaciones con la marca. */
+    private final JustificationValidator validator = j -> j.contains("RECHAZADA")
+            ? new JustificationValidator.Outcome(false, "regla de prueba")
+            : new JustificationValidator.Outcome(true, "ok");
     private final QuestionService service =
-            new QuestionService(QuestionBuilder::new, lengthValidator, repository, published::add);
+            new QuestionService(QuestionBuilder::new, validator, repository, notificacionPort);
 
-    private static CreateQuestionCommand command(String justification) {
-        return new CreateQuestionCommand("¿2 + 2?", justification,
-                List.of(new CreateQuestionCommand.OptionData("A", "3"),
-                        new CreateQuestionCommand.OptionData("B", "4"),
-                        new CreateQuestionCommand.OptionData("C", "5"),
-                        new CreateQuestionCommand.OptionData("D", "6")),
+    private static CrearPreguntaCommand command(String justification) {
+        return new CrearPreguntaCommand("¿2 + 2?", justification,
+                List.of(new CrearPreguntaCommand.OptionData("A", "3"),
+                        new CrearPreguntaCommand.OptionData("B", "4"),
+                        new CrearPreguntaCommand.OptionData("C", "5"),
+                        new CrearPreguntaCommand.OptionData("D", "6")),
                 "B");
     }
 
     /** @brief Justificación válida → se guarda en DRAFT. */
     @Test
     void createsWhenJustificationIsValid() {
-        Question q = service.create(command("Dos más dos es igual a cuatro."));
+        Question q = service.crearPregunta(command("Dos más dos es igual a cuatro."));
         assertNotNull(q.getId());
         assertEquals(QuestionStatus.DRAFT, q.getStatus());
         assertEquals(1, repository.data.size());
@@ -86,31 +92,32 @@ class QuestionServiceTest {
     /** @brief Justificación rechazada → excepción y NO se guarda. */
     @Test
     void doesNotSaveWhenJustificationIsRejected() {
-        assertThrows(ValidationRejectedException.class, () -> service.create(command("Muy corta")));
+        assertThrows(ValidationRejectedException.class,
+                () -> service.crearPregunta(command("Justificación RECHAZADA por el servicio.")));
         assertTrue(repository.data.isEmpty());
     }
 
-    /** @brief Enviar a revisión publica el comando con un operationId. */
+    /** @brief Enviar a evaluación notifica el comando con un operationId. */
     @Test
     void submitPublishesCommand() {
-        Question q = service.create(command("Dos más dos es igual a cuatro."));
-        SubmissionReceipt receipt = service.submitForReview(q.getId());
+        Question q = service.crearPregunta(command("Dos más dos es igual a cuatro."));
+        String operationId = service.enviarAEvaluacion(q.getId());
         assertEquals(1, published.size());
-        assertEquals(receipt.operationId(), published.get(0).operationId());
+        assertEquals(operationId, published.get(0).operationId());
         assertEquals(q.getId(), published.get(0).questionId());
     }
 
-    /** @brief Enviar una pregunta inexistente falla y no publica nada. */
+    /** @brief Enviar una pregunta inexistente falla y no notifica nada. */
     @Test
     void submitUnknownQuestionFails() {
-        assertThrows(QuestionNotFoundException.class, () -> service.submitForReview(99L));
+        assertThrows(QuestionNotFoundException.class, () -> service.enviarAEvaluacion(99L));
         assertTrue(published.isEmpty());
     }
 
     /** @brief El evento de Lifecycle actualiza el estado guardado. */
     @Test
     void syncStatusUpdatesQuestion() {
-        Question q = service.create(command("Dos más dos es igual a cuatro."));
+        Question q = service.crearPregunta(command("Dos más dos es igual a cuatro."));
         service.syncStatus(q.getId(), QuestionStatus.PENDING_REVIEW);
         assertEquals(QuestionStatus.PENDING_REVIEW, service.getById(q.getId()).getStatus());
     }

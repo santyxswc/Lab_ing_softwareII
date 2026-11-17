@@ -1,6 +1,6 @@
 /**
- * @file QuestionRepositoryJpaImplTest.java
- * @brief Prueba de integración de la persistencia en H2 (Punto 3.3).
+ * @file JpaQuestionAdapterTest.java
+ * @brief Prueba de integración del adaptador JPA sobre H2 (Punto 3.3).
  * @author Santiago Caicedo
  */
 package co.edu.unicauca.saberpro.question.infrastructure.jpa;
@@ -10,7 +10,7 @@ import co.edu.unicauca.saberpro.question.domain.model.Question;
 import co.edu.unicauca.saberpro.question.domain.model.QuestionStatus;
 import co.edu.unicauca.saberpro.question.infrastructure.jpa.mapper.QuestionDomainMapper;
 import co.edu.unicauca.saberpro.question.infrastructure.jpa.record.QuestionRecord;
-import co.edu.unicauca.saberpro.question.infrastructure.jpa.repository.QuestionRepositoryJpaImpl;
+import co.edu.unicauca.saberpro.question.infrastructure.jpa.repository.JpaQuestionAdapter;
 import co.edu.unicauca.saberpro.question.infrastructure.jpa.repository.SpringQuestionDataRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,15 +26,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * @brief Guarda y recupera una pregunta pasando por el mapeador y H2.
  *
  * Se desactiva la transacción de la prueba para que cada operación del
- * repositorio use su propia transacción, como en ejecución real.
+ * adaptador use su propia transacción, como en ejecución real.
  */
 @DataJpaTest
-@Import({QuestionRepositoryJpaImpl.class, QuestionDomainMapper.class})
+@Import({JpaQuestionAdapter.class, QuestionDomainMapper.class})
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-class QuestionRepositoryJpaImplTest {
+class JpaQuestionAdapterTest {
 
     @Autowired
-    private QuestionRepositoryJpaImpl repository;
+    private JpaQuestionAdapter repository;
 
     @Autowired
     private SpringQuestionDataRepository dataRepository;

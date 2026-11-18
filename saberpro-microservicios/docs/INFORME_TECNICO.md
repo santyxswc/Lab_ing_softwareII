@@ -15,6 +15,7 @@ Laboratorio de Ingeniería de Software II
 - **Fecha:** Popayán, Noviembre de 2026  
 - **Repositorio GitHub:** [santyxswc/Lab_ing_softwareII](https://github.com/santyxswc/Lab_ing_softwareII)  
 - **Pull Requests de integración:** [#1](https://github.com/santyxswc/Lab_ing_softwareII/pull/1) (entrega inicial) y [#2](https://github.com/santyxswc/Lab_ing_softwareII/pull/2) (ajustes a la guía)  
+- **Video de sustentación:** [https://youtu.be/QBl4uzqZIZw](https://youtu.be/QBl4uzqZIZw)  
 - **Informe en el formato institucional (Word):** [`Informe-Tecnico-Taller13.docx`](Informe-Tecnico-Taller13.docx)  
 
 ---
@@ -391,6 +392,7 @@ Operación <uuid> → APPLIED: DRAFT -> PENDING_REVIEW
 
 - **Repositorio GitHub:** [santyxswc/Lab_ing_softwareII](https://github.com/santyxswc/Lab_ing_softwareII)
 - **Pull Requests de integración:** [#1](https://github.com/santyxswc/Lab_ing_softwareII/pull/1) y [#2](https://github.com/santyxswc/Lab_ing_softwareII/pull/2)
+- **Video de sustentación:** [https://youtu.be/QBl4uzqZIZw](https://youtu.be/QBl4uzqZIZw)
 - **Informe en formato Word:** [`Informe-Tecnico-Taller13.docx`](Informe-Tecnico-Taller13.docx)
 - **Módulo del Taller 13:** `saberpro-microservicios/`
 - **Informe de la Fase I (Taller 12):** [`banco-preguntas-hexagonal/docs/INFORME_TECNICO.md`](../../banco-preguntas-hexagonal/docs/INFORME_TECNICO.md)

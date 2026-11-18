@@ -136,6 +136,8 @@ docker compose down
 
 No hace falta tener Java ni Maven instalados: la compilación ocurre dentro de Docker.
 
+Video de sustentación: [https://youtu.be/QBl4uzqZIZw](https://youtu.be/QBl4uzqZIZw).
+
 El informe técnico final, en el formato institucional, es
 [`saberpro-microservicios/docs/Informe-Tecnico-Taller13.docx`](saberpro-microservicios/docs/Informe-Tecnico-Taller13.docx)
 (modelo C4 niveles 1 a 4, trazabilidad semestral y capturas de Docker y RabbitMQ). La versión en Markdown está en
